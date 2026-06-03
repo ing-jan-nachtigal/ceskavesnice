@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f1f7f4;
+  --foreground: #17251b;
+  --font-sans: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: rgba(253, 230, 138, 0.28);
+  color: #ffffff;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.brand-logo {
+  display: flex;
+  flex-wrap: nowrap;
+  font-size: clamp(3rem, 8vw, 7.25rem);
+  line-height: 0.9;
+}
+
+.animate-fade-in {
+  animation: fade-in 1.1s ease-out both;
+}
+
+.map-grid {
+  background-image:
+    linear-gradient(rgba(23, 51, 31, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 51, 31, 0.08) 1px, transparent 1px),
+    linear-gradient(135deg, transparent 0 42%, rgba(14, 116, 144, 0.10) 42% 43%, transparent 43% 100%);
+  background-size: 46px 46px, 46px 46px, 100% 100%;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .brand-logo {
+    flex-direction: column;
+    font-size: clamp(3rem, 15vw, 5rem);
+  }
+}
