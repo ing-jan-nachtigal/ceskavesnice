@@ -29,10 +29,11 @@ export async function searchMista(query: string, signal?: AbortSignal) {
     throw new Error("Supabase environment variables are not configured.");
   }
 
+  const safeSearch = trimmed.replaceAll("*", "").replaceAll(",", "");
   const params = new URLSearchParams({
     select:
       "id,kod_ruian,druh_prvku,nazev,kod_obce,nazev_obce,okres,kraj,zemepisna_sirka,zemepisna_delka",
-    nazev: `ilike.*${trimmed.replaceAll("*", "")}*`,
+    or: `(nazev.ilike.*${safeSearch}*,nazev_obce.ilike.*${safeSearch}*)`,
     order: "nazev.asc",
     limit: "10",
   });
