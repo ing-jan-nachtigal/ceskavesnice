@@ -40,6 +40,38 @@ export async function sendEmail({ html, subject, text, to }: EmailParams) {
   }
 }
 
+export async function sendManagementLinkEmail({
+  managementUrl,
+  to,
+}: {
+  managementUrl: string;
+  to: string;
+}) {
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`Správní odkaz pro úpravu příspěvků:\n${managementUrl}`);
+  }
+
+  await sendEmail({
+    html: `<p>Dobrý den,</p>
+<p>posíláme vám odkaz pro správu vašich příspěvků na webu ČeskáVesnice.cz.</p>
+<p><a href="${managementUrl}">Otevřít moje příspěvky</a></p>
+<p>Odkaz je časově omezený.</p>
+<p>ČeskáVesnice.cz</p>`,
+    subject: "Odkaz pro úpravu příspěvků – ČeskáVesnice.cz",
+    text: `Dobrý den,
+
+posíláme vám odkaz pro správu vašich příspěvků na webu ČeskáVesnice.cz.
+
+Otevřít moje příspěvky:
+${managementUrl}
+
+Odkaz je časově omezený.
+
+ČeskáVesnice.cz`,
+    to,
+  });
+}
+
 export function getSiteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { sendEmail, getSiteUrl } from "@/lib/email";
+import { getSiteUrl, sendEmail, sendManagementLinkEmail } from "@/lib/email";
 import {
   formatMisto,
   supabaseRest,
@@ -215,13 +215,33 @@ export async function requestManagementLinkAction(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const email = stringValue(formData, "email");
+  const email = stringValue(formData, "email").toLowerCase();
+  const successMessage =
+    "Pokud k tomuto e-mailu existují příspěvky, poslali jsme odkaz pro jejich úpravu.";
 
   if (!email || !email.includes("@")) {
     return { message: "Vyplňte prosím platný e-mail.", ok: false };
   }
 
+  console.log("Žádost o správní odkaz:", email);
+
   try {
+    const contributionParams = new URLSearchParams({
+      email: `eq.${email}`,
+      limit: "1",
+      select: "id",
+    });
+    const existingContributions = await supabaseRest<Array<Pick<PrispevekRecord, "id">>>(
+      `prispevky?${contributionParams.toString()}`,
+    );
+
+    if (existingContributions.length === 0) {
+      return {
+        message: successMessage,
+        ok: true,
+      };
+    }
+
     const token = createToken();
     const tokenHash = hashToken(token);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -235,26 +255,28 @@ export async function requestManagementLinkAction(
       method: "POST",
     });
 
-    const link = `${getSiteUrl()}/moje-prispevky?token=${token}`;
+    const managementUrl = `${getSiteUrl()}/moje-prispevky?token=${token}`;
+    console.log("Správní odkaz vytvořen:", managementUrl);
 
-    await sendEmail({
-      html: `<p>Dobrý den,</p><p>požádali jste o odkaz pro správu svých příspěvků na ČeskáVesnice.cz.</p><p><a href="${link}">${link}</a></p><p>Odkaz je časově omezený.</p>`,
-      subject: "Odkaz pro správu příspěvků",
-      text: `ČeskáVesnice.cz\n\nOdkaz pro správu příspěvků: ${link}\n\nOdkaz je časově omezený.`,
-      to: email,
-    });
+    try {
+      await sendManagementLinkEmail({
+        managementUrl,
+        to: email,
+      });
+      console.log("Správní e-mail odeslán:", email);
+    } catch (error) {
+      console.error("Chyba při odesílání správního e-mailu:", error);
+    }
 
     return {
-      message:
-        "Pokud k tomuto e-mailu existují příspěvky, poslali jsme odkaz pro jejich úpravu.",
+      message: successMessage,
       ok: true,
     };
   } catch (error) {
     console.error("Management link request failed", error);
 
     return {
-      message:
-        "Pokud k tomuto e-mailu existují příspěvky, poslali jsme odkaz pro jejich úpravu.",
+      message: successMessage,
       ok: true,
     };
   }
