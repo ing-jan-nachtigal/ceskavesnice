@@ -105,12 +105,12 @@ export async function submitContributionAction(
   }
 
   if (photos.length > 5) {
-    return { message: "Nahrajte prosím maximálně 5 fotografií.", ok: false };
+    return { message: "Můžete nahrát nejvýše 5 fotografií.", ok: false };
   }
 
   for (const photo of photos) {
     if (!allowedPhotoTypes.has(photo.type)) {
-      return { message: "Podporované jsou pouze obrázky JPG, PNG a WebP.", ok: false };
+      return { message: "Podporované jsou fotografie JPG, PNG a WebP.", ok: false };
     }
 
     if (photo.size > 8 * 1024 * 1024) {
@@ -150,30 +150,49 @@ export async function submitContributionAction(
     const contribution = inserted[0];
     const photoPaths: Record<string, string> = {};
 
-    for (let index = 0; index < photos.length; index += 1) {
-      const path = await uploadContributionPhoto(contribution.id, index + 1, photos[index]);
-      photoPaths[`foto_${index + 1}`] = path;
-    }
+    try {
+      for (let index = 0; index < photos.length; index += 1) {
+        const path = await uploadContributionPhoto(contribution.id, index + 1, photos[index]);
+        photoPaths[`foto_${index + 1}`] = path;
+      }
 
-    if (Object.keys(photoPaths).length > 0) {
-      await supabaseRest(`prispevky?id=eq.${contribution.id}`, {
-        body: JSON.stringify(photoPaths),
-        method: "PATCH",
-      });
+      if (Object.keys(photoPaths).length > 0) {
+        await supabaseRest(`prispevky?id=eq.${contribution.id}`, {
+          body: JSON.stringify(photoPaths),
+          method: "PATCH",
+        });
+      }
+    } catch (error) {
+      console.error("Contribution photo processing or upload failed", error);
+
+      return {
+        message: "Fotografii se nepodařilo zpracovat. Zkuste prosím jiný obrázek.",
+        ok: false,
+      };
     }
 
     const confirmUrl = `${getSiteUrl()}/potvrdit-prispevek?token=${token}`;
 
-    await sendEmail({
-      html: `<p>Dobrý den,</p><p>děkujeme za příspěvek „${nadpis}“ pro ${formatMisto(
-        misto,
-      )}.</p><p>Potvrďte jej prosím kliknutím na odkaz: <a href="${confirmUrl}">${confirmUrl}</a></p><p>Po potvrzení se příspěvek zveřejní na ČeskáVesnice.cz.</p>`,
-      subject: `Potvrzení příspěvku: ${nadpis}`,
-      text: `ČeskáVesnice.cz\n\nPříspěvek: ${nadpis}\nMísto: ${formatMisto(
-        misto,
-      )}\n\nPotvrzovací odkaz: ${confirmUrl}\n\nPo potvrzení se příspěvek zveřejní.`,
-      to: email,
-    });
+    try {
+      await sendEmail({
+        html: `<p>Dobrý den,</p><p>děkujeme za příspěvek „${nadpis}“ pro ${formatMisto(
+          misto,
+        )}.</p><p>Potvrďte jej prosím kliknutím na odkaz: <a href="${confirmUrl}">${confirmUrl}</a></p><p>Po potvrzení se příspěvek zveřejní na ČeskáVesnice.cz.</p>`,
+        subject: `Potvrzení příspěvku: ${nadpis}`,
+        text: `ČeskáVesnice.cz\n\nPříspěvek: ${nadpis}\nMísto: ${formatMisto(
+          misto,
+        )}\n\nPotvrzovací odkaz: ${confirmUrl}\n\nPo potvrzení se příspěvek zveřejní.`,
+        to: email,
+      });
+    } catch (error) {
+      console.error("Contribution confirmation email failed", error);
+
+      return {
+        message:
+          "Příspěvek jsme přijali, ale nepodařilo se odeslat potvrzovací e-mail. Zkuste to prosím později nebo napište správci projektu.",
+        ok: false,
+      };
+    }
 
     revalidatePath("/");
 
@@ -183,11 +202,10 @@ export async function submitContributionAction(
       ok: true,
     };
   } catch (error) {
+    console.error("Contribution submit failed", error);
+
     return {
-      message:
-        error instanceof Error
-          ? error.message
-          : "Příspěvek se nepodařilo odeslat. Zkuste to prosím později.",
+      message: "Příspěvek se nepodařilo odeslat. Zkuste to prosím později.",
       ok: false,
     };
   }
@@ -231,7 +249,9 @@ export async function requestManagementLinkAction(
         "Pokud k tomuto e-mailu existují příspěvky, poslali jsme odkaz pro jejich úpravu.",
       ok: true,
     };
-  } catch {
+  } catch (error) {
+    console.error("Management link request failed", error);
+
     return {
       message:
         "Pokud k tomuto e-mailu existují příspěvky, poslali jsme odkaz pro jejich úpravu.",
@@ -290,10 +310,15 @@ export async function updateContributionAction(formData: FormData) {
     web_obce: stringValue(formData, "web_obce") || null,
   };
 
-  await supabaseRest(`prispevky?id=eq.${id}&email=eq.${encodeURIComponent(session.email)}`, {
-    body: JSON.stringify(body),
-    method: "PATCH",
-  });
+  try {
+    await supabaseRest(`prispevky?id=eq.${id}&email=eq.${encodeURIComponent(session.email)}`, {
+      body: JSON.stringify(body),
+      method: "PATCH",
+    });
+  } catch (error) {
+    console.error("Contribution update failed", error);
+    redirect(`/moje-prispevky?token=${token}&chyba=ulozeni`);
+  }
 
   revalidatePath("/");
   redirect(`/moje-prispevky?token=${token}&ulozeno=1`);
@@ -308,14 +333,19 @@ export async function deleteContributionAction(formData: FormData) {
     redirect("/moje-prispevky?error=missing");
   }
 
-  await supabaseRest(`prispevky?id=eq.${id}&email=eq.${encodeURIComponent(session.email)}`, {
-    body: JSON.stringify({
-      smazano_autorem_v: new Date().toISOString(),
-      upraveno: new Date().toISOString(),
-      zverejneno: false,
-    }),
-    method: "PATCH",
-  });
+  try {
+    await supabaseRest(`prispevky?id=eq.${id}&email=eq.${encodeURIComponent(session.email)}`, {
+      body: JSON.stringify({
+        smazano_autorem_v: new Date().toISOString(),
+        upraveno: new Date().toISOString(),
+        zverejneno: false,
+      }),
+      method: "PATCH",
+    });
+  } catch (error) {
+    console.error("Contribution delete failed", error);
+    redirect(`/moje-prispevky?token=${token}&chyba=smazani`);
+  }
 
   revalidatePath("/");
   redirect(`/moje-prispevky?token=${token}&smazano=1`);

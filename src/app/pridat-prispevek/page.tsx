@@ -2,6 +2,8 @@ import { ContributionForms } from "@/components/ContributionForms";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
+export const runtime = "nodejs";
+
 export const metadata = {
   title: "Přidat příspěvek - ČeskáVesnice.cz",
   description:

@@ -16,6 +16,7 @@ import Link from "next/link";
 
 type MyContributionsPageProps = {
   searchParams: Promise<{
+    chyba?: string;
     edit?: string;
     smazano?: string;
     token?: string;
@@ -54,7 +55,7 @@ export const metadata = {
 };
 
 export default async function MyContributionsPage({ searchParams }: MyContributionsPageProps) {
-  const { edit, smazano, token, ulozeno } = await searchParams;
+  const { chyba, edit, smazano, token, ulozeno } = await searchParams;
   const session = await validateManagementToken(token || "");
 
   if (!session) {
@@ -68,7 +69,7 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
               Odkaz pro správu příspěvků je neplatný nebo vypršel. Požádejte si prosím o nový.
             </p>
             <Link
-              href="/pridat-prispevek"
+              href="/upravit-prispevky"
               className="mt-8 inline-flex bg-[#17331f] px-5 py-3 text-sm font-semibold text-white"
             >
               Získat nový odkaz
@@ -105,6 +106,11 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
           {smazano ? (
             <p className="mt-6 border border-emerald-900/18 bg-emerald-900/5 px-4 py-3 text-sm text-[#17331f]">
               Příspěvek byl smazán z webu.
+            </p>
+          ) : null}
+          {chyba ? (
+            <p className="mt-6 border border-red-900/18 bg-red-900/5 px-4 py-3 text-sm text-red-900">
+              Změnu se nepodařilo uložit. Zkuste to prosím znovu.
             </p>
           ) : null}
         </div>

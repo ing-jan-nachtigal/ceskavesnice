@@ -6,7 +6,12 @@ import {
   type ActionState,
 } from "@/app/pridat-prispevek/actions";
 import { VillageAutocompleteField } from "@/components/VillageAutocompleteField";
-import { useActionState } from "react";
+import {
+  allowedClientPhotoTypes,
+  optimizeContributionImageInBrowser,
+} from "@/lib/client-images";
+import Link from "next/link";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 
 const initialState: ActionState = {
   message: "",
@@ -22,6 +27,71 @@ export function ContributionForms() {
     requestManagementLinkAction,
     initialState,
   );
+  const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
+  const [photoMessage, setPhotoMessage] = useState("");
+  const [photoError, setPhotoError] = useState("");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const photos = formData
+      .getAll("photos")
+      .filter((file): file is File => file instanceof File && file.size > 0);
+
+    setPhotoError("");
+    setPhotoMessage("");
+
+    if (photos.length > 5) {
+      setPhotoError("Můžete nahrát nejvýše 5 fotografií.");
+      return;
+    }
+
+    for (const photo of photos) {
+      if (!allowedClientPhotoTypes.has(photo.type)) {
+        setPhotoError("Podporované jsou fotografie JPG, PNG a WebP.");
+        return;
+      }
+    }
+
+    formData.delete("photos");
+
+    if (photos.length > 0) {
+      setIsPreparingPhotos(true);
+      setPhotoMessage("Fotografie se připravují...");
+
+      try {
+        const optimizedPhotos = await Promise.all(
+          photos.map((photo) => optimizeContributionImageInBrowser(photo)),
+        );
+
+        optimizedPhotos.forEach((photo) => {
+          formData.append("photos", photo);
+        });
+        setPhotoMessage(
+          optimizedPhotos.length === 1
+            ? "Připravena 1 fotografie k odeslání."
+            : `Připraveno ${optimizedPhotos.length} fotografií k odeslání.`,
+        );
+      } catch (error) {
+        setPhotoError(
+          error instanceof Error
+            ? error.message
+            : "Fotografii se nepodařilo připravit. Zkuste prosím jiný obrázek.",
+        );
+        setPhotoMessage("");
+        setIsPreparingPhotos(false);
+        return;
+      }
+
+      setIsPreparingPhotos(false);
+    }
+
+    startTransition(() => {
+      submitAction(formData);
+    });
+  }
 
   return (
     <section className="px-5 pb-20 sm:px-8 lg:pb-28">
@@ -42,7 +112,7 @@ export function ContributionForms() {
             </p>
           </div>
 
-          <form action={submitAction} encType="multipart/form-data" className="grid gap-5">
+          <form encType="multipart/form-data" onSubmit={handleSubmit} className="grid gap-5">
             <input
               type="text"
               name="website"
@@ -145,6 +215,16 @@ export function ContributionForms() {
                 Maximálně 5 fotografií, jedna fotografie nejvýše 8 MB. Podporované
                 formáty: JPG, PNG, WEBP.
               </p>
+              {photoMessage ? (
+                <p className="mt-3 border border-emerald-900/14 bg-white/55 px-3 py-2 text-sm text-[#17331f]">
+                  {photoMessage}
+                </p>
+              ) : null}
+              {photoError ? (
+                <p className="mt-3 border border-red-900/18 bg-red-900/5 px-3 py-2 text-sm text-red-900">
+                  {photoError}
+                </p>
+              ) : null}
             </div>
 
             <label className="flex gap-3 text-sm leading-7 text-[#515d50]">
@@ -172,15 +252,38 @@ export function ContributionForms() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isPreparingPhotos}
               className="w-fit bg-[#17331f] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#214b2e] disabled:cursor-wait disabled:opacity-70"
             >
-              {isSubmitting ? "Odesílám..." : "Odeslat příspěvek"}
+              {isPreparingPhotos
+                ? "Připravuji fotografie..."
+                : isSubmitting
+                  ? "Odesílám..."
+                  : "Odeslat příspěvek"}
             </button>
           </form>
         </section>
 
         <aside className="space-y-8">
+          <section className="border border-emerald-950/10 bg-white/72 p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)] sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-800/70">
+              správa příspěvků
+            </p>
+            <h2 className="mt-4 font-serif text-3xl text-[#102417]">
+              Už jste přispěli?
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-[#667062]">
+              Nechte si poslat soukromý odkaz, přes který uvidíte svoje příspěvky
+              a můžete je upravit nebo smazat z webu.
+            </p>
+            <Link
+              href="/upravit-prispevky"
+              className="mt-6 inline-flex bg-[#17331f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#214b2e]"
+            >
+              Otevřít úpravu příspěvků
+            </Link>
+          </section>
+
           <section className="border border-emerald-950/10 bg-[#eef7f6] p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)] sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-800/70">
               B) Úprava mých příspěvků

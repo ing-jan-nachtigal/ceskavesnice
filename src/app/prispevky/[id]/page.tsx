@@ -192,6 +192,16 @@ export default async function ContributionDetailPage({ params }: ContributionDet
                 Web obce
               </a>
             ) : null}
+
+            <div className="mt-8 border-t border-emerald-950/10 pt-6 text-sm leading-7 text-[#667062]">
+              Chcete upravit svůj příspěvek?{" "}
+              <Link
+                href="/upravit-prispevky"
+                className="font-semibold text-[#17331f] transition hover:text-emerald-800"
+              >
+                Nechte si poslat odkaz na e-mail.
+              </Link>
+            </div>
           </aside>
         </div>
       </section>
