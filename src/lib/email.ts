@@ -11,11 +11,17 @@ export async function sendEmail({ html, subject, text, to }: EmailParams) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
 
-  if (process.env.NODE_ENV !== "production") {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!isProduction) {
     console.log(`[ČeskáVesnice.cz e-mail] ${subject}\nKomu: ${to}\n${text}`);
   }
 
   if (!apiKey || !from) {
+    if (isProduction) {
+      throw new Error("Chybí nastavení pro odesílání e-mailů.");
+    }
+
     return;
   }
 

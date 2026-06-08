@@ -223,7 +223,7 @@ export async function requestManagementLinkAction(
     return { message: "Vyplňte prosím platný e-mail.", ok: false };
   }
 
-  console.log("Žádost o správní odkaz:", email);
+  console.log("[management-link] žádost přijata:", email);
 
   try {
     const contributionParams = new URLSearchParams({
@@ -254,26 +254,23 @@ export async function requestManagementLinkAction(
       }),
       method: "POST",
     });
+    console.log("[management-link] token uložen do DB:", email);
 
     const managementUrl = `${getSiteUrl()}/moje-prispevky?token=${token}`;
-    console.log("Správní odkaz vytvořen:", managementUrl);
-
-    try {
-      await sendManagementLinkEmail({
-        managementUrl,
-        to: email,
-      });
-      console.log("Správní e-mail odeslán:", email);
-    } catch (error) {
-      console.error("Chyba při odesílání správního e-mailu:", error);
-    }
+    console.log("[management-link] managementUrl:", managementUrl);
+    console.log("[management-link] volám sendManagementLinkEmail:", email);
+    await sendManagementLinkEmail({
+      managementUrl,
+      to: email,
+    });
+    console.log("[management-link] e-mail odeslán:", email);
 
     return {
       message: successMessage,
       ok: true,
     };
   } catch (error) {
-    console.error("Management link request failed", error);
+    console.error("[management-link] chyba:", error);
 
     return {
       message: successMessage,
