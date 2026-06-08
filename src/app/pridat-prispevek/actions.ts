@@ -19,10 +19,16 @@ export type ActionState = {
 };
 
 const allowedPhotoTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const photoSlots = [1, 2, 3, 4, 5] as const;
 
 function stringValue(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function fileValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return value instanceof File && value.size > 0 ? value : null;
 }
 
 function isYoutubeUrl(value: string) {
@@ -42,6 +48,24 @@ function getPhotos(formData: FormData) {
   return formData
     .getAll("photos")
     .filter((file): file is File => file instanceof File && file.size > 0);
+}
+
+function getPhotoFiles(formData: FormData, key: string) {
+  return formData
+    .getAll(key)
+    .filter((file): file is File => file instanceof File && file.size > 0);
+}
+
+function validatePhotoFile(photo: File) {
+  if (!allowedPhotoTypes.has(photo.type)) {
+    return "Podporované jsou fotografie JPG, PNG a WebP.";
+  }
+
+  if (photo.size > 8 * 1024 * 1024) {
+    return "Fotografie je příliš velká. Nahrajte prosím menší soubor.";
+  }
+
+  return null;
 }
 
 async function getMisto(id: number) {
@@ -319,7 +343,27 @@ export async function updateContributionAction(formData: FormData) {
     redirect("/moje-prispevky?error=missing");
   }
 
-  const body = {
+  const replacementFiles = photoSlots
+    .map((slot) => ({
+      file: fileValue(formData, `replace_foto_${slot}`),
+      slot,
+    }))
+    .filter((entry): entry is { file: File; slot: (typeof photoSlots)[number] } =>
+      Boolean(entry.file),
+    );
+  const newPhotos = getPhotoFiles(formData, "new_photos");
+  const photosToValidate = [...replacementFiles.map((entry) => entry.file), ...newPhotos];
+
+  for (const photo of photosToValidate) {
+    const error = validatePhotoFile(photo);
+
+    if (error) {
+      console.error("Contribution update photo validation failed", error);
+      redirect(`/moje-prispevky?token=${token}&chyba=fotky`);
+    }
+  }
+
+  const body: Record<string, string | boolean | null> = {
     jmeno_autora: stringValue(formData, "jmeno_autora") || null,
     nadpis: stringValue(formData, "nadpis"),
     popis_videa: stringValue(formData, "popis_videa") || null,
@@ -330,16 +374,64 @@ export async function updateContributionAction(formData: FormData) {
   };
 
   try {
+    const currentRows = await supabaseRest<PrispevekRecord[]>(
+      `prispevky?id=eq.${id}&email=eq.${encodeURIComponent(
+        session.email,
+      )}&limit=1&select=id,foto_1,foto_2,foto_3,foto_4,foto_5`,
+    );
+    const currentContribution = currentRows[0];
+
+    if (!currentContribution) {
+      redirect("/moje-prispevky?error=missing");
+    }
+
+    const photoValues = [
+      currentContribution.foto_1,
+      currentContribution.foto_2,
+      currentContribution.foto_3,
+      currentContribution.foto_4,
+      currentContribution.foto_5,
+    ];
+
+    for (const slot of photoSlots) {
+      if (formData.get(`remove_foto_${slot}`) === "on") {
+        photoValues[slot - 1] = null;
+      }
+    }
+
+    for (const { file, slot } of replacementFiles) {
+      photoValues[slot - 1] = await uploadContributionPhoto(id, slot, file);
+    }
+
+    for (const photo of newPhotos) {
+      const freeIndex = photoValues.findIndex((value) => !value);
+
+      if (freeIndex === -1) {
+        throw new Error("PHOTO_LIMIT");
+      }
+
+      photoValues[freeIndex] = await uploadContributionPhoto(id, freeIndex + 1, photo);
+    }
+
+    photoValues.forEach((value, index) => {
+      body[`foto_${index + 1}`] = value;
+    });
+
     await supabaseRest(`prispevky?id=eq.${id}&email=eq.${encodeURIComponent(session.email)}`, {
       body: JSON.stringify(body),
       method: "PATCH",
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "PHOTO_LIMIT") {
+      redirect(`/moje-prispevky?token=${token}&chyba=fotky`);
+    }
+
     console.error("Contribution update failed", error);
     redirect(`/moje-prispevky?token=${token}&chyba=ulozeni`);
   }
 
   revalidatePath("/");
+  revalidatePath(`/prispevky/${id}`);
   redirect(`/moje-prispevky?token=${token}&ulozeno=1`);
 }
 

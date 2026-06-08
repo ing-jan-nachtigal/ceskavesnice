@@ -1,13 +1,14 @@
 import {
   deleteContributionAction,
-  updateContributionAction,
   validateManagementToken,
 } from "@/app/pridat-prispevek/actions";
+import { EditContributionForm } from "@/components/EditContributionForm";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { formatCzechDate } from "@/lib/date";
 import {
   formatMisto,
+  getStoragePublicUrl,
   supabaseRest,
   type MistoRecord,
   type PrispevekRecord,
@@ -29,7 +30,7 @@ async function loadContributions(email: string) {
     email: `eq.${email}`,
     order: "vytvoreno.desc",
     select:
-      "id,id_mista,email,jmeno_autora,nadpis,text_prispevku,video_url,popis_videa,web_obce,zverejneno,vytvoreno,upraveno,smazano_autorem_v",
+      "id,id_mista,email,jmeno_autora,nadpis,text_prispevku,foto_1,foto_2,foto_3,foto_4,foto_5,video_url,popis_videa,web_obce,zverejneno,vytvoreno,upraveno,smazano_autorem_v",
   });
   const contributions = await supabaseRest<PrispevekRecord[]>(`prispevky?${params.toString()}`);
   const placeIds = [...new Set(contributions.map((contribution) => contribution.id_mista))];
@@ -110,7 +111,9 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
           ) : null}
           {chyba ? (
             <p className="mt-6 border border-red-900/18 bg-red-900/5 px-4 py-3 text-sm text-red-900">
-              Změnu se nepodařilo uložit. Zkuste to prosím znovu.
+              {chyba === "fotky"
+                ? "Fotografie se nepodařilo uložit. Příspěvek může mít nejvýše 5 fotografií a podporované jsou fotografie JPG, PNG a WebP."
+                : "Změnu se nepodařilo uložit. Zkuste to prosím znovu."}
             </p>
           ) : null}
         </div>
@@ -181,66 +184,17 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
 
           <div className="border border-emerald-950/10 bg-white/70 p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)] sm:p-8">
             {editContribution ? (
-              <form action={updateContributionAction} className="grid gap-5">
-                <input type="hidden" name="token" value={token} />
-                <input type="hidden" name="id" value={editContribution.id} />
-                <h2 className="font-serif text-4xl text-[#102417]">Upravit příspěvek</h2>
-                <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                  Jméno autora
-                  <input
-                    name="jmeno_autora"
-                    defaultValue={editContribution.jmeno_autora || ""}
-                    className="border border-emerald-950/14 bg-[#f8faf4] px-4 py-3"
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                  Nadpis
-                  <input
-                    name="nadpis"
-                    defaultValue={editContribution.nadpis}
-                    className="border border-emerald-950/14 bg-[#f8faf4] px-4 py-3"
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                  Text příspěvku
-                  <textarea
-                    name="text_prispevku"
-                    rows={7}
-                    defaultValue={editContribution.text_prispevku || ""}
-                    className="border border-emerald-950/14 bg-[#f8faf4] px-4 py-3"
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                  YouTube URL
-                  <input
-                    name="video_url"
-                    defaultValue={editContribution.video_url || ""}
-                    className="border border-emerald-950/14 bg-[#f8faf4] px-4 py-3"
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                  Popis videa
-                  <input
-                    name="popis_videa"
-                    defaultValue={editContribution.popis_videa || ""}
-                    className="border border-emerald-950/14 bg-[#f8faf4] px-4 py-3"
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                  Web obce
-                  <input
-                    name="web_obce"
-                    defaultValue={editContribution.web_obce || ""}
-                    className="border border-emerald-950/14 bg-[#f8faf4] px-4 py-3"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="w-fit bg-[#17331f] px-6 py-3 text-sm font-semibold text-white"
-                >
-                  Uložit příspěvek
-                </button>
-              </form>
+              <EditContributionForm
+                contribution={editContribution}
+                photoUrls={[
+                  getStoragePublicUrl(editContribution.foto_1),
+                  getStoragePublicUrl(editContribution.foto_2),
+                  getStoragePublicUrl(editContribution.foto_3),
+                  getStoragePublicUrl(editContribution.foto_4),
+                  getStoragePublicUrl(editContribution.foto_5),
+                ]}
+                token={token || ""}
+              />
             ) : (
               <div>
                 <h2 className="font-serif text-4xl text-[#102417]">Vyberte příspěvek</h2>
