@@ -82,16 +82,17 @@ export async function supabaseRest<T>(
     headers,
   });
 
+  const responseText = await response.text();
+
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Supabase request failed with status ${response.status}.`);
+    throw new Error(responseText || `Supabase request failed with status ${response.status}.`);
   }
 
-  if (response.status === 204) {
+  if (response.status === 204 || !responseText.trim()) {
     return null as T;
   }
 
-  return (await response.json()) as T;
+  return JSON.parse(responseText) as T;
 }
 
 export async function countRows(table: string, filter = "") {

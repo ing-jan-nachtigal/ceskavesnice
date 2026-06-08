@@ -22,7 +22,7 @@ export async function sendEmail({ html, subject, text, to }: EmailParams) {
       throw new Error("Chybí nastavení pro odesílání e-mailů.");
     }
 
-    return;
+    return null;
   }
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -39,11 +39,27 @@ export async function sendEmail({ html, subject, text, to }: EmailParams) {
     },
     method: "POST",
   });
+  const responseText = await response.text();
+  let responseData: unknown = null;
+
+  if (responseText.trim()) {
+    try {
+      responseData = JSON.parse(responseText) as unknown;
+    } catch (error) {
+      console.error("Resend response JSON parse failed:", responseText, error);
+    }
+  }
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "E-mail se nepodařilo odeslat.");
+    console.error("Resend email failed:", {
+      body: responseText,
+      status: response.status,
+    });
+
+    throw new Error("Email sending failed");
   }
+
+  return responseData;
 }
 
 export async function sendManagementLinkEmail({
@@ -57,7 +73,7 @@ export async function sendManagementLinkEmail({
     console.log(`Správní odkaz pro úpravu příspěvků:\n${managementUrl}`);
   }
 
-  await sendEmail({
+  const responseData = await sendEmail({
     html: `<p>Dobrý den,</p>
 <p>posíláme vám odkaz pro správu vašich příspěvků na webu ČeskáVesnice.cz.</p>
 <p><a href="${managementUrl}">Otevřít moje příspěvky</a></p>
@@ -76,6 +92,7 @@ Odkaz je časově omezený.
 ČeskáVesnice.cz`,
     to,
   });
+  console.log("[management-link] Resend response:", responseData);
 }
 
 export function getSiteUrl() {
