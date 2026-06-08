@@ -2,15 +2,29 @@ import { formatCzechDate } from "@/lib/date";
 import {
   countRows,
   formatMisto,
+  getContributionPhotoPaths,
+  getStoragePublicUrl,
   isServerSupabaseConfigured,
   supabaseRest,
   type MistoRecord,
   type PrispevekRecord,
 } from "@/lib/supabase/server";
+import { getYouTubeThumbnailUrl } from "@/lib/video";
+import Link from "next/link";
 
 type PublicContribution = Pick<
   PrispevekRecord,
-  "id" | "id_mista" | "nadpis" | "text_prispevku" | "vytvoreno"
+  | "foto_1"
+  | "foto_2"
+  | "foto_3"
+  | "foto_4"
+  | "foto_5"
+  | "id"
+  | "id_mista"
+  | "nadpis"
+  | "text_prispevku"
+  | "video_url"
+  | "vytvoreno"
 >;
 
 async function loadPublicData() {
@@ -28,7 +42,7 @@ async function loadPublicData() {
       countRows("mista"),
       countRows("prispevky", "&zverejneno=eq.true&smazano_autorem_v=is.null"),
       supabaseRest<PublicContribution[]>(
-        "prispevky?select=id,id_mista,nadpis,text_prispevku,vytvoreno&zverejneno=eq.true&smazano_autorem_v=is.null&order=vytvoreno.desc&limit=6",
+        "prispevky?select=id,id_mista,nadpis,text_prispevku,video_url,foto_1,foto_2,foto_3,foto_4,foto_5,vytvoreno&zverejneno=eq.true&smazano_autorem_v=is.null&order=vytvoreno.desc&limit=6",
       ),
     ]);
     const placeIds = [...new Set(recent.map((contribution) => contribution.id_mista))];
@@ -98,25 +112,40 @@ export async function PublicContributions() {
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {recent.map((contribution) => {
               const place = places.get(contribution.id_mista);
+              const firstPhoto = getContributionPhotoPaths(contribution)[0];
+              const previewUrl = firstPhoto
+                ? getStoragePublicUrl(firstPhoto)
+                : getYouTubeThumbnailUrl(contribution.video_url);
 
               return (
-                <article
+                <Link
                   key={contribution.id}
-                  className="border border-emerald-950/10 bg-white/68 p-6 shadow-[0_24px_70px_rgba(40,55,35,0.08)]"
+                  href={`/prispevky/${contribution.id}`}
+                  className="group overflow-hidden border border-emerald-950/10 bg-white/68 shadow-[0_24px_70px_rgba(40,55,35,0.08)] transition duration-500 hover:-translate-y-1 hover:border-emerald-700/28"
                 >
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#7c8576]">
-                    {formatMisto(place)}
-                  </p>
-                  <h3 className="mt-4 font-serif text-3xl text-[#102417]">
-                    {contribution.nadpis}
-                  </h3>
-                  <p className="mt-4 text-sm leading-7 text-[#515d50]">
-                    {excerpt(contribution.text_prispevku)}
-                  </p>
-                  <p className="mt-6 border-t border-emerald-950/10 pt-4 text-xs uppercase tracking-[0.18em] text-emerald-800/70">
-                    {formatCzechDate(contribution.vytvoreno)}
-                  </p>
-                </article>
+                  {previewUrl ? (
+                    <div
+                      aria-label={`Náhled příspěvku ${contribution.nadpis}`}
+                      className="aspect-[4/3] bg-cover bg-center"
+                      role="img"
+                      style={{ backgroundImage: `url("${previewUrl}")` }}
+                    />
+                  ) : null}
+                  <article className="p-6">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[#7c8576]">
+                      {formatMisto(place)}
+                    </p>
+                    <h3 className="mt-4 font-serif text-3xl text-[#102417]">
+                      {contribution.nadpis}
+                    </h3>
+                    <p className="mt-4 text-sm leading-7 text-[#515d50]">
+                      {excerpt(contribution.text_prispevku)}
+                    </p>
+                    <p className="mt-6 border-t border-emerald-950/10 pt-4 text-xs uppercase tracking-[0.18em] text-emerald-800/70">
+                      {formatCzechDate(contribution.vytvoreno)}
+                    </p>
+                  </article>
+                </Link>
               );
             })}
           </div>

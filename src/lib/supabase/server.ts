@@ -1,5 +1,6 @@
 import "server-only";
 import { optimizeContributionImage } from "@/lib/images";
+import { formatPlace } from "@/lib/places";
 
 export type PrispevekRecord = {
   id: number;
@@ -146,11 +147,29 @@ export async function uploadContributionPhoto(
 }
 
 export function formatMisto(misto: MistoRecord | undefined) {
-  if (!misto) {
-    return "místo neuvedeno";
+  return formatPlace(misto);
+}
+
+export function getContributionPhotoPaths(
+  contribution: Pick<PrispevekRecord, "foto_1" | "foto_2" | "foto_3" | "foto_4" | "foto_5">,
+) {
+  return [
+    contribution.foto_1,
+    contribution.foto_2,
+    contribution.foto_3,
+    contribution.foto_4,
+    contribution.foto_5,
+  ].filter((path): path is string => Boolean(path));
+}
+
+export function getStoragePublicUrl(path: string | null | undefined) {
+  if (!path || !supabaseUrl) {
+    return null;
   }
 
-  return `${misto.nazev}, ${misto.nazev_obce || "obec neuvedena"}, okres ${
-    misto.okres || "neuveden"
-  }, ${misto.kraj || "kraj neuveden"}`;
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/prispevky/${path}`;
 }
