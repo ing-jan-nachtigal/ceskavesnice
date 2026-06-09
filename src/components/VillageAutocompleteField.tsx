@@ -127,7 +127,7 @@ export function VillageAutocompleteField({
                 >
                   <span className="block font-serif text-xl text-[#102417]">{misto.nazev}</span>
                   <span className="mt-1 block text-xs uppercase tracking-[0.16em] text-[#667062]">
-                    {misto.nazev_obce || "obec neuvedena"} · {misto.okres || "okres neuveden"} ·{" "}
+                    {misto.nazev_obce || "obec neuvedena"} · okres {misto.okres || "neuveden"} ·{" "}
                     {misto.kraj || "kraj neuveden"}
                   </span>
                 </button>
