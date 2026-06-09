@@ -31,6 +31,8 @@ export type MistoRecord = {
   nazev_obce: string | null;
   okres: string | null;
   kraj: string | null;
+  zemepisna_sirka?: number | null;
+  zemepisna_delka?: number | null;
 };
 
 export type SpravniOdkazRecord = {

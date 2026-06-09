@@ -1,3 +1,4 @@
+import { PhotoGallery } from "@/components/PhotoGallery";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { formatCzechDate } from "@/lib/date";
@@ -135,24 +136,7 @@ export default async function ContributionDetailPage({ params }: ContributionDet
               </div>
             ) : null}
 
-            {photoUrls.length > 0 ? (
-              <section>
-                <p className="text-xs font-semibold uppercase tracking-[0.34em] text-emerald-800/70">
-                  fotografie
-                </p>
-                <div className="mt-5 grid gap-5 md:grid-cols-2">
-                  {photoUrls.map((url, index) => (
-                    <div
-                      aria-label={`Fotografie ${index + 1} k příspěvku ${contribution.nadpis}`}
-                      className="aspect-[4/3] border border-emerald-950/10 bg-cover bg-center shadow-[0_18px_50px_rgba(40,55,35,0.08)]"
-                      key={url}
-                      role="img"
-                      style={{ backgroundImage: `url("${url}")` }}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
+            <PhotoGallery photos={photoUrls} title={contribution.nadpis} />
           </article>
 
           <aside className="h-fit border border-emerald-950/10 bg-white/70 p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)]">

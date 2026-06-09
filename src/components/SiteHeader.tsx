@@ -6,7 +6,7 @@ import { SiteSearch } from "./SiteSearch";
 
 const navItems = [
   { label: "Vesnice", href: "/#vesnice" },
-  { label: "Mapa", href: "/#mapa" },
+  { label: "Mapa", href: "/mapa" },
   { label: "Přidat příspěvek", href: "/pridat-prispevek" },
   { label: "Moje příspěvky", href: "/upravit-prispevky" },
 ];
