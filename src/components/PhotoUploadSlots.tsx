@@ -79,7 +79,13 @@ export const PhotoUploadSlots = forwardRef<PhotoUploadSlotsHandle, PhotoUploadSl
             formData.delete(`remove_foto_${slot}`);
 
             if (file) {
-              formData.append(`foto_${slot}`, file);
+              formData.append(
+                `foto_${slot}`,
+                new File([file], `foto-${slot}.webp`, {
+                  lastModified: file.lastModified,
+                  type: "image/webp",
+                }),
+              );
             }
 
             if (mode === "edit" && removedSlots[slot] && !file) {

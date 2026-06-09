@@ -45,14 +45,31 @@ function isYoutubeUrl(value: string) {
 }
 
 function getPhotoSlotFiles(formData: FormData) {
-  return photoSlots
-    .map((slot) => ({
-      file: fileValue(formData, `foto_${slot}`),
-      slot,
-    }))
+  const photo1 = fileValue(formData, "foto_1");
+  const photo2 = fileValue(formData, "foto_2");
+  const photo3 = fileValue(formData, "foto_3");
+  const photo4 = fileValue(formData, "foto_4");
+  const photo5 = fileValue(formData, "foto_5");
+
+  return [
+    { file: photo1, slot: 1 },
+    { file: photo2, slot: 2 },
+    { file: photo3, slot: 3 },
+    { file: photo4, slot: 4 },
+    { file: photo5, slot: 5 },
+  ]
     .filter((entry): entry is { file: File; slot: (typeof photoSlots)[number] } =>
       Boolean(entry.file),
     );
+}
+
+function describePhotoFiles(photos: Array<{ file: File; slot: number }>) {
+  return photos.map(({ file, slot }) => ({
+    name: file.name,
+    size: file.size,
+    slot,
+    type: file.type,
+  }));
 }
 
 function validatePhotoFile(photo: File) {
@@ -81,6 +98,9 @@ export async function submitContributionAction(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  console.log("[create-contribution] submit start");
+
+  try {
   if (stringValue(formData, "website")) {
     return {
       message:
@@ -99,6 +119,8 @@ export async function submitContributionAction(
   const webObce = stringValue(formData, "web_obce");
   const souhlas = formData.get("souhlas") === "on";
   const photos = getPhotoSlotFiles(formData);
+  console.log("[create-contribution] form fields loaded");
+  console.log("[create-contribution] photo fields:", describePhotoFiles(photos));
 
   if (!email || !email.includes("@")) {
     return { message: "Vyplňte prosím platný e-mail autora.", ok: false };
@@ -145,9 +167,11 @@ export async function submitContributionAction(
     if (!misto) {
       return { message: "Vybrané místo se nepodařilo ověřit.", ok: false };
     }
+    console.log("[create-contribution] place verified:", misto.id);
 
     const token = createToken();
     const tokenHash = hashToken(token);
+    console.log("[create-contribution] contribution insert start");
     const inserted = await supabaseRest<PrispevekRecord[]>("prispevky", {
       body: JSON.stringify({
         email,
@@ -169,15 +193,29 @@ export async function submitContributionAction(
     });
 
     const contribution = inserted[0];
+    console.log("[create-contribution] contribution inserted:", contribution?.id);
+
+    if (!contribution?.id) {
+      throw new Error("Contribution insert did not return an id.");
+    }
+
     const photoPaths: Record<string, string> = {};
 
     try {
       for (const { file, slot } of photos) {
+        console.log("[create-contribution] photo upload start", {
+          name: file.name,
+          size: file.size,
+          slot,
+          type: file.type,
+        });
         const path = await uploadContributionPhoto(contribution.id, slot, file);
         photoPaths[`foto_${slot}`] = path;
+        console.log("[create-contribution] photo uploaded:", path);
       }
 
       if (Object.keys(photoPaths).length > 0) {
+        console.log("[create-contribution] photo paths update start", photoPaths);
         await supabaseRest(`prispevky?id=eq.${contribution.id}`, {
           body: JSON.stringify(photoPaths),
           method: "PATCH",
@@ -185,9 +223,10 @@ export async function submitContributionAction(
       }
     } catch (error) {
       console.error("Contribution photo processing or upload failed", error);
+      console.error("[create-contribution] failed:", error);
 
       return {
-        message: "Fotografii se nepodařilo připravit. Zkuste prosím jiný obrázek.",
+        message: "Fotografii se nepodařilo uložit. Zkuste prosím jiný obrázek.",
         ok: false,
       };
     }
@@ -195,6 +234,7 @@ export async function submitContributionAction(
     const confirmUrl = `${getSiteUrl()}/potvrdit-prispevek?token=${token}`;
 
     try {
+      console.log("[create-contribution] confirmation email sending");
       await sendEmail({
         html: `<p>Dobrý den,</p><p>děkujeme za příspěvek „${nadpis}“ pro ${formatMisto(
           misto,
@@ -205,6 +245,7 @@ export async function submitContributionAction(
         )}\n\nPotvrzovací odkaz: ${confirmUrl}\n\nPo potvrzení se příspěvek zveřejní.`,
         to: email,
       });
+      console.log("[create-contribution] confirmation email sent");
     } catch (error) {
       console.error("Contribution confirmation email failed", error);
 
@@ -215,6 +256,7 @@ export async function submitContributionAction(
     }
 
     revalidatePath("/");
+    console.log("[create-contribution] done");
 
     return {
       message:
@@ -222,7 +264,15 @@ export async function submitContributionAction(
       ok: true,
     };
   } catch (error) {
-    console.error("Contribution submit failed", error);
+    console.error("[create-contribution] failed:", error);
+
+    return {
+      message: "Příspěvek se nepodařilo uložit. Zkuste to prosím znovu.",
+      ok: false,
+    };
+  }
+  } catch (error) {
+    console.error("[create-contribution] failed:", error);
 
     return {
       message: "Příspěvek se nepodařilo uložit. Zkuste to prosím znovu.",
