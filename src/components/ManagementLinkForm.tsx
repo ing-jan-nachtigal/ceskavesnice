@@ -42,7 +42,7 @@ export function ManagementLinkForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="w-fit bg-[#17331f] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#214b2e] disabled:cursor-wait disabled:opacity-70"
+        className="btn-3d btn-primary w-fit px-6 py-3 text-sm font-semibold disabled:cursor-wait disabled:opacity-70"
       >
         {isPending ? "Odesílám..." : "Poslat odkaz pro úpravu"}
       </button>

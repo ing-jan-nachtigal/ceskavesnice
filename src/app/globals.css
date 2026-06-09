@@ -55,6 +55,64 @@ body {
   background-size: 46px 46px, 46px 46px, 100% 100%;
 }
 
+.btn-3d {
+  border-radius: 0;
+  box-shadow: 0 6px 0 rgba(12, 36, 21, 0.18), 0 14px 28px rgba(40, 55, 35, 0.14);
+  transform: translateY(0);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.btn-3d:hover {
+  box-shadow: 0 7px 0 rgba(12, 36, 21, 0.2), 0 18px 34px rgba(40, 55, 35, 0.18);
+  transform: translateY(-1px);
+}
+
+.btn-3d:active {
+  box-shadow: 0 2px 0 rgba(12, 36, 21, 0.18), 0 8px 18px rgba(40, 55, 35, 0.14);
+  transform: translateY(3px);
+}
+
+.btn-primary {
+  background: #17331f;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #214b2e;
+}
+
+.btn-secondary {
+  border: 1px solid rgba(23, 51, 31, 0.22);
+  background: rgba(255, 255, 255, 0.56);
+  color: #17331f;
+}
+
+.btn-secondary:hover {
+  border-color: rgba(23, 51, 31, 0.45);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.btn-danger {
+  border: 1px solid rgba(127, 29, 29, 0.28);
+  background: rgba(255, 255, 255, 0.62);
+  color: #7f1d1d;
+}
+
+.btn-danger:hover {
+  border-color: rgba(127, 29, 29, 0.44);
+  background: rgba(127, 29, 29, 0.06);
+}
+
+.required-star {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

@@ -31,6 +31,8 @@ async function loadContributions(email: string) {
     order: "vytvoreno.desc",
     select:
       "id,id_mista,email,jmeno_autora,nadpis,text_prispevku,foto_1,foto_2,foto_3,foto_4,foto_5,video_url,popis_videa,web_obce,zverejneno,vytvoreno,upraveno,smazano_autorem_v",
+    smazano_autorem_v: "is.null",
+    zverejneno: "eq.true",
   });
   const contributions = await supabaseRest<PrispevekRecord[]>(`prispevky?${params.toString()}`);
   const placeIds = [...new Set(contributions.map((contribution) => contribution.id_mista))];
@@ -71,7 +73,7 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
             </p>
             <Link
               href="/upravit-prispevky"
-              className="mt-8 inline-flex bg-[#17331f] px-5 py-3 text-sm font-semibold text-white"
+              className="btn-3d btn-primary mt-8 inline-flex px-5 py-3 text-sm font-semibold"
             >
               Získat nový odkaz
             </Link>
@@ -101,7 +103,7 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
           </p>
           {ulozeno ? (
             <p className="mt-6 border border-emerald-900/18 bg-emerald-900/5 px-4 py-3 text-sm text-[#17331f]">
-              Příspěvek byl uložen.
+              Příspěvek byl uložený.
             </p>
           ) : null}
           {smazano ? (
@@ -156,7 +158,7 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
                       href={`/moje-prispevky?token=${token}&edit=${contribution.id}`}
-                      className="border border-emerald-900/22 px-4 py-2 text-sm font-semibold text-[#17331f]"
+                      className="btn-3d btn-secondary px-4 py-2 text-sm font-semibold"
                     >
                       Upravit
                     </Link>
@@ -170,7 +172,7 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
                         </label>
                         <button
                           type="submit"
-                          className="w-fit border border-red-900/22 px-4 py-2 text-sm font-semibold text-red-900"
+                          className="btn-3d btn-danger w-fit px-4 py-2 text-sm font-semibold"
                         >
                           Smazat z webu
                         </button>

@@ -28,7 +28,7 @@ export function Hero() {
 
           <a
             href="#vesnice"
-            className="mt-10 inline-flex w-fit border border-white/48 bg-white/14 px-5 py-3 text-sm font-semibold tracking-[0.08em] text-white backdrop-blur-sm transition hover:border-lime-100/80 hover:bg-white/24"
+            className="btn-3d mt-10 inline-flex w-fit border border-white/48 bg-white/18 px-5 py-3 text-sm font-semibold tracking-[0.08em] text-white backdrop-blur-sm hover:border-lime-100/80 hover:bg-white/28"
           >
             Prohlédnout vesnice
           </a>

@@ -121,14 +121,14 @@ export default async function VillagePage({ params }: VillagePageProps) {
                   href={village.geo.officialWebsite}
                   target="_blank"
                   rel="noreferrer"
-                  className="border border-emerald-900/20 px-5 py-3 text-center text-sm font-semibold text-[#17331f] transition hover:border-emerald-800/45 hover:bg-emerald-900/5"
+                  className="btn-3d btn-secondary px-5 py-3 text-center text-sm font-semibold"
                 >
                   Oficiální web obce
                 </a>
               ) : null}
               <a
                 href={`mailto:ili@ili.cz?subject=Doplnit obec ${encodeURIComponent(village.geo.name)}`}
-                className="bg-[#17331f] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#214b2e]"
+                className="btn-3d btn-primary px-5 py-3 text-center text-sm font-semibold"
               >
                 Doplnit obec
               </a>

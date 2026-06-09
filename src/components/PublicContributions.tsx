@@ -113,9 +113,8 @@ export async function PublicContributions() {
             {recent.map((contribution) => {
               const place = places.get(contribution.id_mista);
               const firstPhoto = getContributionPhotoPaths(contribution)[0];
-              const previewUrl = firstPhoto
-                ? getStoragePublicUrl(firstPhoto)
-                : getYouTubeThumbnailUrl(contribution.video_url);
+              const youtubeThumbnail = getYouTubeThumbnailUrl(contribution.video_url);
+              const previewUrl = youtubeThumbnail || (firstPhoto ? getStoragePublicUrl(firstPhoto) : null);
 
               return (
                 <Link

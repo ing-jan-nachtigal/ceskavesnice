@@ -70,7 +70,9 @@ export function VillageAutocompleteField({
 
   return (
     <div className="relative grid gap-2 text-sm font-medium text-[#334235]">
-      <label htmlFor={id}>Název obce</label>
+      <label htmlFor={id}>
+        Název obce <span className="required-star">*</span>
+      </label>
       <input
         id={id}
         name={name}

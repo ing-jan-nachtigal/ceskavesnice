@@ -113,6 +113,9 @@ export function ContributionForms() {
           </div>
 
           <form encType="multipart/form-data" onSubmit={handleSubmit} className="grid gap-5">
+            <p className="text-sm text-[#667062]">
+              Pole označená <span className="required-star">*</span> jsou povinná.
+            </p>
             <input
               type="text"
               name="website"
@@ -124,7 +127,7 @@ export function ContributionForms() {
 
             <div className="grid gap-5 md:grid-cols-2">
               <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                E-mail autora
+                E-mail autora <span className="required-star">*</span>
                 <input
                   name="email"
                   type="email"
@@ -148,7 +151,7 @@ export function ContributionForms() {
             <VillageAutocompleteField />
 
             <label className="grid gap-2 text-sm font-medium text-[#334235]">
-              Nadpis
+              Nadpis <span className="required-star">*</span>
               <input
                 name="nadpis"
                 type="text"
@@ -159,7 +162,7 @@ export function ContributionForms() {
             </label>
 
             <label className="grid gap-2 text-sm font-medium text-[#334235]">
-              Text příspěvku
+              Text příspěvku <span className="required-star">*</span>
               <textarea
                 name="text_prispevku"
                 rows={7}
@@ -208,7 +211,7 @@ export function ContributionForms() {
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   multiple
-                  className="text-sm text-[#667062] file:mr-4 file:border-0 file:bg-[#17331f] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+                  className="text-sm text-[#667062] file:mr-4 file:border-0 file:bg-[#17331f] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-[0_4px_0_rgba(12,36,21,0.18)] hover:file:bg-[#214b2e]"
                 />
               </label>
               <p className="mt-3 text-sm leading-7 text-[#667062]">
@@ -234,7 +237,10 @@ export function ContributionForms() {
                 required
                 className="mt-2 size-4 accent-emerald-800"
               />
-              Souhlasím se zveřejněním zaslaného příspěvku na webu
+              <span>
+                Souhlasím se zveřejněním zaslaného příspěvku na webu
+                <span className="required-star"> *</span>
+              </span>
               ČeskáVesnice.cz.
             </label>
 
@@ -253,7 +259,7 @@ export function ContributionForms() {
             <button
               type="submit"
               disabled={isSubmitting || isPreparingPhotos}
-              className="w-fit bg-[#17331f] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#214b2e] disabled:cursor-wait disabled:opacity-70"
+              className="btn-3d btn-primary w-fit px-6 py-3 text-sm font-semibold disabled:cursor-wait disabled:opacity-70"
             >
               {isPreparingPhotos
                 ? "Připravuji fotografie..."
@@ -278,7 +284,7 @@ export function ContributionForms() {
             </p>
             <Link
               href="/upravit-prispevky"
-              className="mt-6 inline-flex bg-[#17331f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#214b2e]"
+              className="btn-3d btn-primary mt-6 inline-flex px-5 py-3 text-sm font-semibold"
             >
               Otevřít úpravu příspěvků
             </Link>
@@ -324,7 +330,7 @@ export function ContributionForms() {
               <button
                 type="submit"
                 disabled={isRequestingLink}
-                className="w-fit border border-emerald-900/22 px-5 py-3 text-sm font-semibold text-[#17331f] transition hover:border-emerald-800/45 hover:bg-white/60 disabled:cursor-wait disabled:opacity-70"
+                className="btn-3d btn-secondary w-fit px-5 py-3 text-sm font-semibold disabled:cursor-wait disabled:opacity-70"
               >
                 {isRequestingLink ? "Odesílám..." : "Poslat odkaz pro úpravu"}
               </button>

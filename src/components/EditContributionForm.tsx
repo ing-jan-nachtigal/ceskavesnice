@@ -5,7 +5,7 @@ import {
   allowedClientPhotoTypes,
   optimizeContributionImageInBrowser,
 } from "@/lib/client-images";
-import { startTransition, useState, type FormEvent } from "react";
+import { useState, useTransition, type ChangeEvent, type FormEvent } from "react";
 
 type EditableContribution = {
   id: number;
@@ -48,8 +48,36 @@ export function EditContributionForm({
 }: EditContributionFormProps) {
   const currentPhotoCount = photoUrls.filter(Boolean).length;
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
+  const [isSaving, startSavingTransition] = useTransition();
   const [photoMessage, setPhotoMessage] = useState("");
   const [photoError, setPhotoError] = useState("");
+  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]);
+  const [replacementPreviews, setReplacementPreviews] = useState<Record<number, string>>({});
+
+  function handleNewPhotosChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files || []);
+    setNewPhotoPreviews(files.map((file) => URL.createObjectURL(file)).slice(0, 5));
+    setPhotoError("");
+    setPhotoMessage(files.length > 0 ? "Soubor připravený." : "");
+  }
+
+  function handleReplacementChange(slot: number, event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    setReplacementPreviews((current) => {
+      const next = { ...current };
+
+      if (file) {
+        next[slot] = URL.createObjectURL(file);
+      } else {
+        delete next[slot];
+      }
+
+      return next;
+    });
+    setPhotoError("");
+    setPhotoMessage(file ? "Soubor připravený." : "");
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,8 +91,11 @@ export function EditContributionForm({
       }))
       .filter((entry): entry is { file: File; key: string } => Boolean(entry.file));
     const newPhotos = fileValues(formData, "new_photos");
+    const replacementSlots = new Set(
+      replacementEntries.map((entry) => Number(entry.key.replace("replace_foto_", ""))),
+    );
     const removedCount = photoSlots.filter(
-      (slot) => formData.get(`remove_foto_${slot}`) === "on",
+      (slot) => formData.get(`remove_foto_${slot}`) === "on" && !replacementSlots.has(slot),
     ).length;
     const finalPhotoCount = currentPhotoCount - removedCount + newPhotos.length;
 
@@ -118,16 +149,23 @@ export function EditContributionForm({
       setIsPreparingPhotos(false);
     }
 
-    startTransition(() => {
+    startSavingTransition(() => {
       updateContributionAction(formData);
     });
   }
+
+  const freeSlotIndexes = photoUrls
+    .map((url, index) => (!url ? index : null))
+    .filter((index): index is number => index !== null);
 
   return (
     <form encType="multipart/form-data" onSubmit={handleSubmit} className="grid gap-5">
       <input type="hidden" name="token" value={token} />
       <input type="hidden" name="id" value={contribution.id} />
       <h2 className="font-serif text-4xl text-[#102417]">Upravit příspěvek</h2>
+      <p className="text-sm text-[#667062]">
+        Pole označená <span className="required-star">*</span> jsou povinná.
+      </p>
 
       <label className="grid gap-2 text-sm font-medium text-[#334235]">
         Jméno autora
@@ -139,7 +177,7 @@ export function EditContributionForm({
       </label>
 
       <label className="grid gap-2 text-sm font-medium text-[#334235]">
-        Nadpis
+        Nadpis <span className="required-star">*</span>
         <input
           name="nadpis"
           defaultValue={contribution.nadpis}
@@ -148,7 +186,7 @@ export function EditContributionForm({
       </label>
 
       <label className="grid gap-2 text-sm font-medium text-[#334235]">
-        Text příspěvku
+        Text příspěvku <span className="required-star">*</span>
         <textarea
           name="text_prispevku"
           rows={7}
@@ -193,25 +231,39 @@ export function EditContributionForm({
         <div className="mt-5 grid gap-4">
           {photoSlots.map((slot) => {
             const url = photoUrls[slot - 1];
+            const previewUrl = replacementPreviews[slot] || url;
+            const freeSlotOrder = freeSlotIndexes.indexOf(slot - 1);
+            const pendingNewPhotoUrl =
+              freeSlotOrder >= 0 ? newPhotoPreviews[freeSlotOrder] : undefined;
 
             return (
               <div key={slot} className="border border-emerald-950/10 bg-white/65 p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  {url ? (
+                  {previewUrl || pendingNewPhotoUrl ? (
                     <div
                       aria-label={`Fotografie ${slot}`}
                       className="aspect-[4/3] w-full max-w-44 border border-emerald-950/10 bg-cover bg-center"
                       role="img"
-                      style={{ backgroundImage: `url("${url}")` }}
+                      style={{ backgroundImage: `url("${previewUrl || pendingNewPhotoUrl}")` }}
                     />
                   ) : (
                     <div className="flex aspect-[4/3] w-full max-w-44 items-center justify-center border border-dashed border-emerald-900/22 bg-[#f8faf4] text-xs uppercase tracking-[0.2em] text-[#7c8576]">
-                      volná pozice
+                      Volná pozice
                     </div>
                   )}
 
                   <div className="grid flex-1 gap-3 text-sm text-[#334235]">
                     <p className="font-semibold">Fotografie {slot}</p>
+                    {!url && pendingNewPhotoUrl ? (
+                      <p className="text-xs uppercase tracking-[0.18em] text-emerald-800/70">
+                        Soubor připravený
+                      </p>
+                    ) : null}
+                    {url && replacementPreviews[slot] ? (
+                      <p className="text-xs uppercase tracking-[0.18em] text-emerald-800/70">
+                        Náhrada připravená
+                      </p>
+                    ) : null}
                     {url ? (
                       <label className="flex gap-2 text-[#667062]">
                         <input
@@ -224,12 +276,19 @@ export function EditContributionForm({
                     ) : null}
                     <label className="grid gap-2">
                       {url ? "Nahradit fotografii" : "Přidat novou fotografii"}
-                      <input
-                        name={url ? `replace_foto_${slot}` : "new_photos"}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="text-sm text-[#667062] file:mr-4 file:border-0 file:bg-[#17331f] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
-                      />
+                      {url ? (
+                        <input
+                          name={`replace_foto_${slot}`}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          onChange={(event) => handleReplacementChange(slot, event)}
+                          className="text-sm text-[#667062] file:mr-4 file:border-0 file:bg-[#17331f] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-[0_4px_0_rgba(12,36,21,0.18)] hover:file:bg-[#214b2e]"
+                        />
+                      ) : (
+                        <span className="text-xs leading-6 text-[#667062]">
+                          Nové fotografie vyberte hromadně níže. Zaplní se první volné pozice.
+                        </span>
+                      )}
                     </label>
                   </div>
                 </div>
@@ -237,6 +296,20 @@ export function EditContributionForm({
             );
           })}
         </div>
+
+        {freeSlotIndexes.length > 0 ? (
+          <label className="mt-5 grid gap-2 text-sm font-medium text-[#334235]">
+            Přidat nové fotografie
+            <input
+              name="new_photos"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={handleNewPhotosChange}
+              className="text-sm text-[#667062] file:mr-4 file:border-0 file:bg-[#17331f] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-[0_4px_0_rgba(12,36,21,0.18)] hover:file:bg-[#214b2e]"
+            />
+          </label>
+        ) : null}
 
         {photoMessage ? (
           <p className="mt-4 border border-emerald-900/14 bg-white/55 px-3 py-2 text-sm text-[#17331f]">
@@ -252,10 +325,10 @@ export function EditContributionForm({
 
       <button
         type="submit"
-        disabled={isPreparingPhotos}
-        className="w-fit bg-[#17331f] px-6 py-3 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-70"
+        disabled={isPreparingPhotos || isSaving}
+        className="btn-3d btn-primary w-fit px-6 py-3 text-sm font-semibold disabled:cursor-wait disabled:opacity-70"
       >
-        {isPreparingPhotos ? "Připravuji fotografie..." : "Uložit příspěvek"}
+        {isPreparingPhotos ? "Připravuji fotografie..." : isSaving ? "Ukládám..." : "Uložit příspěvek"}
       </button>
     </form>
   );

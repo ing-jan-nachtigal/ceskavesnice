@@ -187,7 +187,7 @@ export default async function ContributionDetailPage({ params }: ContributionDet
                 href={contribution.web_obce}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-8 inline-flex border border-emerald-900/22 px-5 py-3 text-sm font-semibold text-[#17331f] transition hover:border-emerald-800/45 hover:bg-emerald-900/5"
+                className="btn-3d btn-secondary mt-8 inline-flex px-5 py-3 text-sm font-semibold"
               >
                 Web obce
               </a>
