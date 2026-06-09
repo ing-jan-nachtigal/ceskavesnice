@@ -44,16 +44,15 @@ function isYoutubeUrl(value: string) {
   }
 }
 
-function getPhotos(formData: FormData) {
-  return formData
-    .getAll("photos")
-    .filter((file): file is File => file instanceof File && file.size > 0);
-}
-
-function getPhotoFiles(formData: FormData, key: string) {
-  return formData
-    .getAll(key)
-    .filter((file): file is File => file instanceof File && file.size > 0);
+function getPhotoSlotFiles(formData: FormData) {
+  return photoSlots
+    .map((slot) => ({
+      file: fileValue(formData, `foto_${slot}`),
+      slot,
+    }))
+    .filter((entry): entry is { file: File; slot: (typeof photoSlots)[number] } =>
+      Boolean(entry.file),
+    );
 }
 
 function validatePhotoFile(photo: File) {
@@ -99,7 +98,7 @@ export async function submitContributionAction(
   const popisVidea = stringValue(formData, "popis_videa");
   const webObce = stringValue(formData, "web_obce");
   const souhlas = formData.get("souhlas") === "on";
-  const photos = getPhotos(formData);
+  const photos = getPhotoSlotFiles(formData);
 
   if (!email || !email.includes("@")) {
     return { message: "Vyplňte prosím platný e-mail autora.", ok: false };
@@ -132,13 +131,11 @@ export async function submitContributionAction(
     return { message: "Můžete nahrát nejvýše 5 fotografií.", ok: false };
   }
 
-  for (const photo of photos) {
-    if (!allowedPhotoTypes.has(photo.type)) {
-      return { message: "Podporované jsou fotografie JPG, PNG a WebP.", ok: false };
-    }
+  for (const { file } of photos) {
+    const photoError = validatePhotoFile(file);
 
-    if (photo.size > 8 * 1024 * 1024) {
-      return { message: "Fotografie je příliš velká. Nahrajte prosím menší soubor.", ok: false };
+    if (photoError) {
+      return { message: photoError, ok: false };
     }
   }
 
@@ -175,9 +172,9 @@ export async function submitContributionAction(
     const photoPaths: Record<string, string> = {};
 
     try {
-      for (let index = 0; index < photos.length; index += 1) {
-        const path = await uploadContributionPhoto(contribution.id, index + 1, photos[index]);
-        photoPaths[`foto_${index + 1}`] = path;
+      for (const { file, slot } of photos) {
+        const path = await uploadContributionPhoto(contribution.id, slot, file);
+        photoPaths[`foto_${slot}`] = path;
       }
 
       if (Object.keys(photoPaths).length > 0) {
@@ -190,7 +187,7 @@ export async function submitContributionAction(
       console.error("Contribution photo processing or upload failed", error);
 
       return {
-        message: "Fotografii se nepodařilo zpracovat. Zkuste prosím jiný obrázek.",
+        message: "Fotografii se nepodařilo připravit. Zkuste prosím jiný obrázek.",
         ok: false,
       };
     }
@@ -212,8 +209,7 @@ export async function submitContributionAction(
       console.error("Contribution confirmation email failed", error);
 
       return {
-        message:
-          "Příspěvek jsme přijali, ale nepodařilo se odeslat potvrzovací e-mail. Zkuste to prosím později nebo napište správci projektu.",
+        message: "Příspěvek se nepodařilo uložit. Zkuste to prosím znovu.",
         ok: false,
       };
     }
@@ -229,7 +225,7 @@ export async function submitContributionAction(
     console.error("Contribution submit failed", error);
 
     return {
-      message: "Příspěvek se nepodařilo odeslat. Zkuste to prosím později.",
+      message: "Příspěvek se nepodařilo uložit. Zkuste to prosím znovu.",
       ok: false,
     };
   }
@@ -343,19 +339,10 @@ export async function updateContributionAction(formData: FormData) {
     redirect("/moje-prispevky?error=missing");
   }
 
-  const replacementFiles = photoSlots
-    .map((slot) => ({
-      file: fileValue(formData, `replace_foto_${slot}`),
-      slot,
-    }))
-    .filter((entry): entry is { file: File; slot: (typeof photoSlots)[number] } =>
-      Boolean(entry.file),
-    );
-  const newPhotos = getPhotoFiles(formData, "new_photos");
-  const photosToValidate = [...replacementFiles.map((entry) => entry.file), ...newPhotos];
+  const photoFiles = getPhotoSlotFiles(formData);
 
-  for (const photo of photosToValidate) {
-    const error = validatePhotoFile(photo);
+  for (const { file } of photoFiles) {
+    const error = validatePhotoFile(file);
 
     if (error) {
       console.error("Contribution update photo validation failed", error);
@@ -399,18 +386,8 @@ export async function updateContributionAction(formData: FormData) {
       }
     }
 
-    for (const { file, slot } of replacementFiles) {
+    for (const { file, slot } of photoFiles) {
       photoValues[slot - 1] = await uploadContributionPhoto(id, slot, file);
-    }
-
-    for (const photo of newPhotos) {
-      const freeIndex = photoValues.findIndex((value) => !value);
-
-      if (freeIndex === -1) {
-        throw new Error("PHOTO_LIMIT");
-      }
-
-      photoValues[freeIndex] = await uploadContributionPhoto(id, freeIndex + 1, photo);
     }
 
     photoValues.forEach((value, index) => {
@@ -422,10 +399,6 @@ export async function updateContributionAction(formData: FormData) {
       method: "PATCH",
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "PHOTO_LIMIT") {
-      redirect(`/moje-prispevky?token=${token}&chyba=fotky`);
-    }
-
     console.error("Contribution update failed", error);
     redirect(`/moje-prispevky?token=${token}&chyba=ulozeni`);
   }

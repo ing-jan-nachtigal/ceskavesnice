@@ -5,13 +5,10 @@ import {
   submitContributionAction,
   type ActionState,
 } from "@/app/pridat-prispevek/actions";
+import { PhotoUploadSlots, type PhotoUploadSlotsHandle } from "@/components/PhotoUploadSlots";
 import { VillageAutocompleteField } from "@/components/VillageAutocompleteField";
-import {
-  allowedClientPhotoTypes,
-  optimizeContributionImageInBrowser,
-} from "@/lib/client-images";
 import Link from "next/link";
-import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { startTransition, useActionState, useRef, useState, type FormEvent } from "react";
 
 const initialState: ActionState = {
   message: "",
@@ -27,8 +24,8 @@ export function ContributionForms() {
     requestManagementLinkAction,
     initialState,
   );
+  const photoSlotsRef = useRef<PhotoUploadSlotsHandle>(null);
   const [isPreparingPhotos, setIsPreparingPhotos] = useState(false);
-  const [photoMessage, setPhotoMessage] = useState("");
   const [photoError, setPhotoError] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -36,57 +33,15 @@ export function ContributionForms() {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const photos = formData
-      .getAll("photos")
-      .filter((file): file is File => file instanceof File && file.size > 0);
 
     setPhotoError("");
-    setPhotoMessage("");
 
-    if (photos.length > 5) {
-      setPhotoError("Můžete nahrát nejvýše 5 fotografií.");
+    if (photoSlotsRef.current?.isPreparing()) {
+      setPhotoError("Počkejte prosím, fotografie se ještě připravují.");
       return;
     }
 
-    for (const photo of photos) {
-      if (!allowedClientPhotoTypes.has(photo.type)) {
-        setPhotoError("Podporované jsou fotografie JPG, PNG a WebP.");
-        return;
-      }
-    }
-
-    formData.delete("photos");
-
-    if (photos.length > 0) {
-      setIsPreparingPhotos(true);
-      setPhotoMessage("Fotografie se připravují...");
-
-      try {
-        const optimizedPhotos = await Promise.all(
-          photos.map((photo) => optimizeContributionImageInBrowser(photo)),
-        );
-
-        optimizedPhotos.forEach((photo) => {
-          formData.append("photos", photo);
-        });
-        setPhotoMessage(
-          optimizedPhotos.length === 1
-            ? "Připravena 1 fotografie k odeslání."
-            : `Připraveno ${optimizedPhotos.length} fotografií k odeslání.`,
-        );
-      } catch (error) {
-        setPhotoError(
-          error instanceof Error
-            ? error.message
-            : "Fotografii se nepodařilo připravit. Zkuste prosím jiný obrázek.",
-        );
-        setPhotoMessage("");
-        setIsPreparingPhotos(false);
-        return;
-      }
-
-      setIsPreparingPhotos(false);
-    }
+    photoSlotsRef.current?.appendToFormData(formData);
 
     startTransition(() => {
       submitAction(formData);
@@ -203,32 +158,20 @@ export function ContributionForms() {
               />
             </label>
 
-            <div className="border border-dashed border-emerald-900/24 bg-[#eef7f6] p-5">
-              <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                Nahrání fotografií
-                <input
-                  name="photos"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  className="text-sm text-[#667062] file:mr-4 file:border-0 file:bg-[#17331f] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:shadow-[0_4px_0_rgba(12,36,21,0.18)] hover:file:bg-[#214b2e]"
-                />
-              </label>
-              <p className="mt-3 text-sm leading-7 text-[#667062]">
-                Maximálně 5 fotografií, jedna fotografie nejvýše 8 MB. Podporované
-                formáty: JPG, PNG, WEBP.
+            <PhotoUploadSlots
+              ref={photoSlotsRef}
+              mode="create"
+              onStatusChange={({ error, isPreparing }) => {
+                setIsPreparingPhotos(isPreparing);
+                setPhotoError(error);
+              }}
+            />
+
+            {photoError ? (
+              <p className="border border-red-900/18 bg-red-900/5 px-4 py-3 text-sm text-red-900">
+                {photoError}
               </p>
-              {photoMessage ? (
-                <p className="mt-3 border border-emerald-900/14 bg-white/55 px-3 py-2 text-sm text-[#17331f]">
-                  {photoMessage}
-                </p>
-              ) : null}
-              {photoError ? (
-                <p className="mt-3 border border-red-900/18 bg-red-900/5 px-3 py-2 text-sm text-red-900">
-                  {photoError}
-                </p>
-              ) : null}
-            </div>
+            ) : null}
 
             <label className="flex gap-3 text-sm leading-7 text-[#515d50]">
               <input
