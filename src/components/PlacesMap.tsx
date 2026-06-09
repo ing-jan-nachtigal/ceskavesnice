@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 type PlacesMapProps = {
   places: MapPlace[];
+  variant?: "compact" | "full";
 };
 
 type LeafletMarker = {
@@ -143,7 +144,7 @@ function popupHtml(place: MapPlace) {
   `;
 }
 
-export function PlacesMap({ places }: PlacesMapProps) {
+export function PlacesMap({ places, variant = "full" }: PlacesMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState("");
 
@@ -163,7 +164,7 @@ export function PlacesMap({ places }: PlacesMapProps) {
         }
 
         map = leaflet.map(container, {
-          scrollWheelZoom: false,
+          scrollWheelZoom: true,
         });
         map.setView([49.55, 14.6], 7);
 
@@ -217,7 +218,11 @@ export function PlacesMap({ places }: PlacesMapProps) {
   }, [places]);
 
   return (
-    <div className="relative min-h-[520px] overflow-hidden rounded-3xl border border-emerald-950/10 bg-[#dfece5] shadow-[0_30px_90px_rgba(45,67,43,0.12)]">
+    <div
+      className={`relative overflow-hidden rounded-3xl border border-emerald-950/10 bg-[#dfece5] shadow-[0_30px_90px_rgba(45,67,43,0.12)] ${
+        variant === "compact" ? "min-h-[420px]" : "min-h-[520px]"
+      }`}
+    >
       <div ref={mapRef} className="absolute inset-0 z-0" />
       {error ? (
         <div className="absolute inset-0 z-10 grid place-items-center bg-[#eef7f6]/92 px-6 text-center text-sm leading-7 text-[#667062]">

@@ -29,7 +29,6 @@ async function confirmContribution(token: string | undefined) {
     const params = new URLSearchParams({
       limit: "1",
       potvrzovaci_token_hash: `eq.${tokenHash}`,
-      potvrzeno_v: "is.null",
       select:
         "id,id_mista,email,jmeno_autora,nadpis,text_prispevku,foto_1,foto_2,foto_3,foto_4,foto_5,video_url,popis_videa,web_obce,zverejneno,vytvoreno,upraveno,potvrzovaci_token_hash,potvrzeno_v,smazano_autorem_v",
     });
@@ -42,13 +41,18 @@ async function confirmContribution(token: string | undefined) {
       return null;
     }
 
-    await supabaseRest(`prispevky?id=eq.${contribution.id}`, {
-      body: JSON.stringify({
-        potvrzeno_v: new Date().toISOString(),
-        zverejneno: true,
-      }),
-      method: "PATCH",
-    });
+    const wasAlreadyPublished = contribution.zverejneno;
+    const confirmedAt = contribution.potvrzeno_v || new Date().toISOString();
+
+    if (!wasAlreadyPublished) {
+      await supabaseRest(`prispevky?id=eq.${contribution.id}`, {
+        body: JSON.stringify({
+          potvrzeno_v: confirmedAt,
+          zverejneno: true,
+        }),
+        method: "PATCH",
+      });
+    }
 
     const placeRows = await supabaseRest<MistoRecord[]>(
       `mista?select=id,nazev,nazev_obce,okres,kraj&id=eq.${contribution.id_mista}&limit=1`,
@@ -56,16 +60,21 @@ async function confirmContribution(token: string | undefined) {
 
     const confirmedContribution = {
       ...contribution,
-      potvrzeno_v: new Date().toISOString(),
+      potvrzeno_v: confirmedAt,
       zverejneno: true,
     };
 
-    revalidatePath("/");
-    revalidatePath(`/prispevky/${contribution.id}`);
+    if (!wasAlreadyPublished) {
+      revalidatePath("/");
+      revalidatePath(`/prispevky/${contribution.id}`);
+      revalidatePath("/mapa");
+      revalidatePath(`/mista/${contribution.id_mista}`);
+    }
 
     return {
       contribution: confirmedContribution,
       place: placeRows[0],
+      status: wasAlreadyPublished ? "already-confirmed" : "confirmed",
     };
   } catch (error) {
     console.error("Contribution confirmation failed", error);
@@ -91,9 +100,11 @@ export default async function ConfirmContributionPage({
             {confirmed ? "Děkujeme." : "Odkaz nelze použít."}
           </h1>
           <p className="mt-6 text-lg leading-9 text-[#435143]">
-            {confirmed
-              ? "Děkujeme, váš příspěvek byl potvrzen a zveřejněn."
-              : "Odkaz je neplatný nebo už byl použit."}
+            {confirmed?.status === "already-confirmed"
+              ? "Příspěvek je už potvrzený a zveřejněný."
+              : confirmed
+                ? "Děkujeme, váš příspěvek byl potvrzen a zveřejněn."
+                : "Odkaz je neplatný nebo poškozený."}
           </p>
         </div>
 
