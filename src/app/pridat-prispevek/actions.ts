@@ -11,6 +11,7 @@ import {
 } from "@/lib/supabase/server";
 import { createToken, hashToken } from "@/lib/tokens";
 import { revalidatePath } from "next/cache";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 
 export type ActionState = {
@@ -258,12 +259,12 @@ export async function submitContributionAction(
     revalidatePath("/");
     console.log("[create-contribution] done");
 
-    return {
-      message:
-        "Děkujeme. Poslali jsme vám potvrzovací e-mail. Po kliknutí na odkaz v e-mailu se příspěvek zveřejní.",
-      ok: true,
-    };
+    redirect("/?odeslano=1");
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     console.error("[create-contribution] failed:", error);
 
     return {
@@ -272,6 +273,10 @@ export async function submitContributionAction(
     };
   }
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     console.error("[create-contribution] failed:", error);
 
     return {

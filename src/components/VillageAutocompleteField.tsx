@@ -136,13 +136,6 @@ export function VillageAutocompleteField({
         </div>
       )}
 
-      <p className="text-xs leading-6 text-[#667062]">
-        Vyhledávání čte tabulku <span className="font-semibold">mista</span> v
-        Supabase. Po výběru se do formuláře uloží skryté{" "}
-        <span className="font-semibold">misto_id</span>; zápis příspěvku zatím
-        není implementovaný.
-      </p>
-
       {selectedMisto ? (
         <div className="mt-2 border border-emerald-950/10 bg-white/52 p-3 text-xs leading-6 text-[#667062]">
           <p className="font-semibold uppercase tracking-[0.18em] text-emerald-800/70">
