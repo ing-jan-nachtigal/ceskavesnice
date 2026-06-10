@@ -13,7 +13,7 @@ import {
   type PrispevekRecord,
 } from "@/lib/supabase/server";
 import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
-import { getYouTubeEmbedUrl, getYouTubeThumbnailUrl } from "@/lib/video";
+import { getVideoInfo } from "@/lib/video";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: ContributionDetailPageProps) 
   const description = contributionTextToPlainExcerpt(contribution.text_prispevku);
   const firstPhoto = getContributionPhotoPaths(contribution)[0];
   const imageUrl =
-    getYouTubeThumbnailUrl(contribution.video_url) ||
+    getVideoInfo(contribution.video_url)?.thumbnailUrl ||
     (firstPhoto ? getStoragePublicUrl(firstPhoto) : null);
   const title = `${contribution.nadpis}${place?.nazev ? ` – ${place.nazev}` : ""} - ČeskáVesnice.cz`;
 
@@ -86,7 +86,7 @@ export default async function ContributionDetailPage({ params }: ContributionDet
   }
 
   const { contribution, place } = data;
-  const embedUrl = getYouTubeEmbedUrl(contribution.video_url);
+  const videoInfo = getVideoInfo(contribution.video_url);
   const photoUrls = getContributionPhotoPaths(contribution)
     .map((path) => getStoragePublicUrl(path))
     .filter((url): url is string => Boolean(url));
@@ -126,10 +126,10 @@ export default async function ContributionDetailPage({ params }: ContributionDet
       <section className="px-5 pb-20 sm:px-8 lg:pb-28">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.25fr_0.75fr]">
           <article className="space-y-10">
-            {embedUrl ? (
+            {videoInfo?.embedUrl ? (
               <div className="overflow-hidden border border-emerald-950/10 bg-black shadow-[0_24px_70px_rgba(40,55,35,0.08)]">
                 <iframe
-                  src={embedUrl}
+                  src={videoInfo.embedUrl}
                   title={`Video k příspěvku ${contribution.nadpis}`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen

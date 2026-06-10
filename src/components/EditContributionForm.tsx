@@ -86,7 +86,10 @@ export function EditContributionForm({
       />
 
       <label className="grid gap-2 text-sm font-medium text-[#334235]">
-        YouTube URL
+        Video URL
+        <span className="text-xs font-normal leading-5 text-[#667062]">
+          Povolené video odkazy: YouTube, Vimeo.
+        </span>
         <input
           name="video_url"
           defaultValue={contribution.video_url || ""}

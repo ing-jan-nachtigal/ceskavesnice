@@ -11,7 +11,7 @@ import {
   type PrispevekRecord,
 } from "@/lib/supabase/server";
 import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
-import { getYouTubeThumbnailUrl } from "@/lib/video";
+import { getVideoInfo } from "@/lib/video";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: PlacePageProps) {
     ? getContributionPhotoPaths(firstContribution)[0]
     : null;
   const imageUrl = firstContribution
-    ? getYouTubeThumbnailUrl(firstContribution.video_url) ||
+    ? getVideoInfo(firstContribution.video_url)?.thumbnailUrl ||
       (firstPhoto ? getStoragePublicUrl(firstPhoto) : null)
     : null;
   const district = cleanDistrict(place.okres);
@@ -171,9 +171,9 @@ export default async function PlacePage({ params }: PlacePageProps) {
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {contributions.map((contribution) => {
                 const firstPhoto = getContributionPhotoPaths(contribution)[0];
-                const youtubeThumbnail = getYouTubeThumbnailUrl(contribution.video_url);
+                const videoThumbnail = getVideoInfo(contribution.video_url)?.thumbnailUrl;
                 const previewUrl =
-                  youtubeThumbnail || (firstPhoto ? getStoragePublicUrl(firstPhoto) : null);
+                  videoThumbnail || (firstPhoto ? getStoragePublicUrl(firstPhoto) : null);
 
                 return (
                   <Link

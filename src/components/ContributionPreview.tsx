@@ -6,7 +6,7 @@ import {
   type MistoRecord,
   type PrispevekRecord,
 } from "@/lib/supabase/server";
-import { getYouTubeEmbedUrl } from "@/lib/video";
+import { getVideoInfo } from "@/lib/video";
 import Link from "next/link";
 
 type ContributionPreviewProps = {
@@ -15,7 +15,7 @@ type ContributionPreviewProps = {
 };
 
 export function ContributionPreview({ contribution, place }: ContributionPreviewProps) {
-  const embedUrl = getYouTubeEmbedUrl(contribution.video_url);
+  const videoInfo = getVideoInfo(contribution.video_url);
   const photoUrls = getContributionPhotoPaths(contribution)
     .map((path) => getStoragePublicUrl(path))
     .filter((url): url is string => Boolean(url));
@@ -37,10 +37,10 @@ export function ContributionPreview({ contribution, place }: ContributionPreview
         ) : null}
       </div>
 
-      {embedUrl ? (
+      {videoInfo?.embedUrl ? (
         <div className="border-y border-emerald-950/10 bg-black">
           <iframe
-            src={embedUrl}
+            src={videoInfo.embedUrl}
             title={`Video k příspěvku ${contribution.nadpis}`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen

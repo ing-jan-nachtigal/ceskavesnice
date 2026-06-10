@@ -1,3 +1,5 @@
+import { getVideoInfo } from "@/lib/video";
+
 export const contributionTextLimits = {
   authorName: 120,
   contributionText: 12_000,
@@ -59,7 +61,7 @@ export function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= contributionTextLimits.email;
 }
 
-export function validateYoutubeUrl(value: string) {
+export function validateVideoUrl(value: string) {
   if (!value) {
     return true;
   }
@@ -70,13 +72,13 @@ export function validateYoutubeUrl(value: string) {
 
   try {
     const url = new URL(value);
-    const host = url.hostname.replace(/^www\./, "");
-
-    return ["youtube.com", "m.youtube.com", "youtu.be"].includes(host);
+    return ["http:", "https:"].includes(url.protocol) && Boolean(getVideoInfo(value));
   } catch {
     return false;
   }
 }
+
+export const validateYoutubeUrl = validateVideoUrl;
 
 export function validateExternalUrl(value: string) {
   if (!value) {

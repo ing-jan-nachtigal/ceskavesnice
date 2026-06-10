@@ -121,11 +121,14 @@ export function ContributionForms() {
 
             <div className="grid gap-5 md:grid-cols-2">
               <label className="grid gap-2 text-sm font-medium text-[#334235]">
-                Odkaz na YouTube video
+                Odkaz na video
+                <span className="text-xs font-normal leading-5 text-[#667062]">
+                  Povolené video odkazy: YouTube, Vimeo.
+                </span>
                 <input
                   name="video_url"
                   type="url"
-                  placeholder="https://www.youtube.com/..."
+                  placeholder="https://www.youtube.com/... nebo https://vimeo.com/..."
                   className="border border-emerald-950/14 bg-[#f8faf4] px-4 py-3 outline-none transition placeholder:text-[#8a9385] focus:border-emerald-800/45 focus:bg-white"
                 />
               </label>

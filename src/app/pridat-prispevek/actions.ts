@@ -144,13 +144,13 @@ export async function submitContributionAction(
 
   if (!textPrispevku && !videoUrl && photos.length === 0) {
     return {
-      message: "Doplňte prosím text, YouTube video nebo alespoň jednu fotografii.",
+      message: "Doplňte prosím text, video nebo alespoň jednu fotografii.",
       ok: false,
     };
   }
 
   if (!validateYoutubeUrl(videoUrl)) {
-    return { message: "YouTube odkaz není ve správném tvaru.", ok: false };
+    return { message: "Video odkaz musí vést na YouTube nebo Vimeo.", ok: false };
   }
 
   if (!validateExternalUrl(webObce)) {

@@ -10,7 +10,7 @@ import {
   type PrispevekRecord,
 } from "@/lib/supabase/server";
 import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
-import { getYouTubeThumbnailUrl } from "@/lib/video";
+import { getVideoInfo } from "@/lib/video";
 import Link from "next/link";
 
 type PublicContribution = Pick<
@@ -100,14 +100,14 @@ export async function PublicContributions() {
               <p className="mt-2 font-serif text-3xl text-[#102417]">{placeCount ?? "..."}</p>
             </div>
             <div className="border border-emerald-950/10 bg-white/58 p-4">
-              <p className="text-xs uppercase tracking-[0.2em]">zveřejněných příspěvků</p>
-              <p className="mt-2 font-serif text-3xl text-[#102417]">{publicCount ?? "..."}</p>
-            </div>
-            <div className="border border-emerald-950/10 bg-white/58 p-4">
               <p className="text-xs uppercase tracking-[0.2em]">míst v kronice</p>
               <p className="mt-2 font-serif text-3xl text-[#102417]">
                 {chroniclePlaceCount ?? "..."}
               </p>
+            </div>
+            <div className="border border-emerald-950/10 bg-white/58 p-4">
+              <p className="text-xs uppercase tracking-[0.2em]">zveřejněných příspěvků</p>
+              <p className="mt-2 font-serif text-3xl text-[#102417]">{publicCount ?? "..."}</p>
             </div>
           </div>
         </div>
@@ -121,8 +121,9 @@ export async function PublicContributions() {
             {recent.map((contribution) => {
               const place = places.get(contribution.id_mista);
               const firstPhoto = getContributionPhotoPaths(contribution)[0];
-              const youtubeThumbnail = getYouTubeThumbnailUrl(contribution.video_url);
-              const previewUrl = youtubeThumbnail || (firstPhoto ? getStoragePublicUrl(firstPhoto) : null);
+              const videoThumbnail = getVideoInfo(contribution.video_url)?.thumbnailUrl;
+              const previewUrl =
+                videoThumbnail || (firstPhoto ? getStoragePublicUrl(firstPhoto) : null);
 
               return (
                 <Link

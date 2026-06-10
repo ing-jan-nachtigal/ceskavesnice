@@ -146,6 +146,15 @@ body {
   margin: 0.2rem 0;
 }
 
+.formatted-contribution-text ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+
+.formatted-contribution-text li {
+  margin-top: 0.25rem;
+}
+
 .cv-map-marker-wrapper {
   background: transparent;
   border: 0;

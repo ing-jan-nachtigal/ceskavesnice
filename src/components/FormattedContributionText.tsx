@@ -24,7 +24,7 @@ export function FormattedContributionText({ text }: FormattedContributionTextPro
   }
 
   return (
-    <div className="space-y-6 text-lg leading-9 text-[#435143]">
+    <div className="formatted-contribution-text space-y-6 text-lg leading-9 text-[#435143]">
       {blocks.map((block, index) => {
         if (block.type === "h2") {
           return (

@@ -115,6 +115,8 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
             <p className="mt-6 border border-red-900/18 bg-red-900/5 px-4 py-3 text-sm text-red-900">
               {chyba === "fotky"
                 ? "Fotografie se nepodařilo uložit. Příspěvek může mít nejvýše 5 fotografií a podporované jsou fotografie JPG, PNG a WebP."
+                : chyba === "video"
+                  ? "Video odkaz musí vést na YouTube nebo Vimeo."
                 : "Změnu se nepodařilo uložit. Zkuste to prosím znovu."}
             </p>
           ) : null}
