@@ -5,8 +5,8 @@ import {
   submitContributionAction,
   type ActionState,
 } from "@/app/pridat-prispevek/actions";
-import { ContributionTextEditor } from "@/components/ContributionTextEditor";
 import { PhotoUploadSlots, type PhotoUploadSlotsHandle } from "@/components/PhotoUploadSlots";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { VillageAutocompleteField } from "@/components/VillageAutocompleteField";
 import Link from "next/link";
 import { startTransition, useActionState, useRef, useState, type FormEvent } from "react";
@@ -117,7 +117,7 @@ export function ContributionForms() {
               />
             </label>
 
-            <ContributionTextEditor />
+            <RichTextEditor />
 
             <div className="grid gap-5 md:grid-cols-2">
               <label className="grid gap-2 text-sm font-medium text-[#334235]">

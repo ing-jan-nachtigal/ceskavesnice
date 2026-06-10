@@ -1,8 +1,8 @@
 "use client";
 
 import { updateContributionAction } from "@/app/pridat-prispevek/actions";
-import { ContributionTextEditor } from "@/components/ContributionTextEditor";
 import { PhotoUploadSlots, type PhotoUploadSlotsHandle } from "@/components/PhotoUploadSlots";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { useRef, useState, useTransition, type FormEvent } from "react";
 
 type EditableContribution = {
@@ -80,7 +80,7 @@ export function EditContributionForm({
         />
       </label>
 
-      <ContributionTextEditor defaultValue={contribution.text_prispevku || ""} />
+      <RichTextEditor defaultValue={contribution.text_prispevku || ""} />
 
       <label className="grid gap-2 text-sm font-medium text-[#334235]">
         YouTube URL

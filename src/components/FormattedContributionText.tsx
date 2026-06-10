@@ -34,14 +34,6 @@ export function FormattedContributionText({ text }: FormattedContributionTextPro
           );
         }
 
-        if (block.type === "h3") {
-          return (
-            <h3 className="font-serif text-3xl leading-tight text-[#102417]" key={index}>
-              {renderInline(block.children)}
-            </h3>
-          );
-        }
-
         if (block.type === "ul") {
           return (
             <ul className="list-disc space-y-2 pl-6" key={index}>
