@@ -10,6 +10,7 @@ import {
   type MistoRecord,
   type PrispevekRecord,
 } from "@/lib/supabase/server";
+import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
 import { getYouTubeThumbnailUrl } from "@/lib/video";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -51,14 +52,6 @@ async function loadPlace(id: string) {
     contributions,
     place: placeRows[0],
   };
-}
-
-function excerpt(text: string | null) {
-  if (!text) {
-    return "Příspěvek zatím nemá textový úvod.";
-  }
-
-  return text.length > 140 ? `${text.slice(0, 137)}...` : text;
 }
 
 export async function generateMetadata({ params }: PlacePageProps) {
@@ -182,7 +175,7 @@ export default async function PlacePage({ params }: PlacePageProps) {
                         {contribution.nadpis}
                       </h3>
                       <p className="mt-4 text-sm leading-7 text-[#515d50]">
-                        {excerpt(contribution.text_prispevku)}
+                        {contributionTextToPlainExcerpt(contribution.text_prispevku, 140)}
                       </p>
                     </article>
                   </Link>

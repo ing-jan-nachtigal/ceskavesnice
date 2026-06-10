@@ -1,6 +1,7 @@
 "use client";
 
 import { updateContributionAction } from "@/app/pridat-prispevek/actions";
+import { ContributionTextEditor } from "@/components/ContributionTextEditor";
 import { PhotoUploadSlots, type PhotoUploadSlotsHandle } from "@/components/PhotoUploadSlots";
 import { useRef, useState, useTransition, type FormEvent } from "react";
 
@@ -79,15 +80,7 @@ export function EditContributionForm({
         />
       </label>
 
-      <label className="grid gap-2 text-sm font-medium text-[#334235]">
-        Text příspěvku <span className="required-star">*</span>
-        <textarea
-          name="text_prispevku"
-          rows={7}
-          defaultValue={contribution.text_prispevku || ""}
-          className="border border-emerald-950/14 bg-[#f8faf4] px-4 py-3"
-        />
-      </label>
+      <ContributionTextEditor defaultValue={contribution.text_prispevku || ""} />
 
       <label className="grid gap-2 text-sm font-medium text-[#334235]">
         YouTube URL

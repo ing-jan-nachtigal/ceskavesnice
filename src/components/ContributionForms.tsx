@@ -5,6 +5,7 @@ import {
   submitContributionAction,
   type ActionState,
 } from "@/app/pridat-prispevek/actions";
+import { ContributionTextEditor } from "@/components/ContributionTextEditor";
 import { PhotoUploadSlots, type PhotoUploadSlotsHandle } from "@/components/PhotoUploadSlots";
 import { VillageAutocompleteField } from "@/components/VillageAutocompleteField";
 import Link from "next/link";
@@ -116,15 +117,7 @@ export function ContributionForms() {
               />
             </label>
 
-            <label className="grid gap-2 text-sm font-medium text-[#334235]">
-              Text příspěvku <span className="required-star">*</span>
-              <textarea
-                name="text_prispevku"
-                rows={7}
-                placeholder="Napište vzpomínku, popis fotografie, historickou zajímavost nebo opravu záznamu."
-                className="resize-y border border-emerald-950/14 bg-[#f8faf4] px-4 py-3 outline-none transition placeholder:text-[#8a9385] focus:border-emerald-800/45 focus:bg-white"
-              />
-            </label>
+            <ContributionTextEditor />
 
             <div className="grid gap-5 md:grid-cols-2">
               <label className="grid gap-2 text-sm font-medium text-[#334235]">

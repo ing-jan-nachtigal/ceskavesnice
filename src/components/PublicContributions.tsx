@@ -9,6 +9,7 @@ import {
   type MistoRecord,
   type PrispevekRecord,
 } from "@/lib/supabase/server";
+import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
 import { getYouTubeThumbnailUrl } from "@/lib/video";
 import Link from "next/link";
 
@@ -67,14 +68,6 @@ async function loadPublicData() {
       places: new Map<number, MistoRecord>(),
     };
   }
-}
-
-function excerpt(text: string | null) {
-  if (!text) {
-    return "Příspěvek zatím nemá textový úvod.";
-  }
-
-  return text.length > 160 ? `${text.slice(0, 157)}...` : text;
 }
 
 export async function PublicContributions() {
@@ -138,7 +131,7 @@ export async function PublicContributions() {
                       {contribution.nadpis}
                     </h3>
                     <p className="mt-4 text-sm leading-7 text-[#515d50]">
-                      {excerpt(contribution.text_prispevku)}
+                      {contributionTextToPlainExcerpt(contribution.text_prispevku)}
                     </p>
                     <p className="mt-6 border-t border-emerald-950/10 pt-4 text-xs uppercase tracking-[0.18em] text-emerald-800/70">
                       {formatCzechDate(contribution.vytvoreno)}

@@ -2,6 +2,14 @@
 
 import { getSiteUrl, sendEmail, sendManagementLinkEmail } from "@/lib/email";
 import {
+  contributionTextLimits,
+  isValidEmail,
+  sanitizeContributionText,
+  sanitizePlainText,
+  validateExternalUrl,
+  validateYoutubeUrl,
+} from "@/lib/sanitize";
+import {
   formatMisto,
   supabaseRest,
   uploadContributionPhoto,
@@ -27,22 +35,13 @@ function stringValue(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function plainValue(formData: FormData, key: string, maxLength: number) {
+  return sanitizePlainText(stringValue(formData, key), maxLength);
+}
+
 function fileValue(formData: FormData, key: string) {
   const value = formData.get(key);
   return value instanceof File && value.size > 0 ? value : null;
-}
-
-function isYoutubeUrl(value: string) {
-  if (!value) {
-    return true;
-  }
-
-  try {
-    const url = new URL(value);
-    return ["youtube.com", "www.youtube.com", "youtu.be", "m.youtube.com"].includes(url.hostname);
-  } catch {
-    return false;
-  }
 }
 
 function getPhotoSlotFiles(formData: FormData) {
@@ -110,20 +109,24 @@ export async function submitContributionAction(
     };
   }
 
-  const email = stringValue(formData, "email");
-  const jmenoAutora = stringValue(formData, "jmeno_autora");
+  const email = plainValue(formData, "email", contributionTextLimits.email).toLowerCase();
+  const jmenoAutora = plainValue(formData, "jmeno_autora", contributionTextLimits.authorName);
   const mistoId = Number(stringValue(formData, "misto_id"));
-  const nadpis = stringValue(formData, "nadpis");
-  const textPrispevku = stringValue(formData, "text_prispevku");
-  const videoUrl = stringValue(formData, "video_url");
-  const popisVidea = stringValue(formData, "popis_videa");
-  const webObce = stringValue(formData, "web_obce");
+  const nadpis = plainValue(formData, "nadpis", contributionTextLimits.title);
+  const textPrispevku = sanitizeContributionText(stringValue(formData, "text_prispevku"));
+  const videoUrl = plainValue(formData, "video_url", contributionTextLimits.url);
+  const popisVidea = plainValue(
+    formData,
+    "popis_videa",
+    contributionTextLimits.videoDescription,
+  );
+  const webObce = plainValue(formData, "web_obce", contributionTextLimits.url);
   const souhlas = formData.get("souhlas") === "on";
   const photos = getPhotoSlotFiles(formData);
   console.log("[create-contribution] form fields loaded");
   console.log("[create-contribution] photo fields:", describePhotoFiles(photos));
 
-  if (!email || !email.includes("@")) {
+  if (!isValidEmail(email)) {
     return { message: "Vyplňte prosím platný e-mail autora.", ok: false };
   }
 
@@ -146,8 +149,12 @@ export async function submitContributionAction(
     };
   }
 
-  if (!isYoutubeUrl(videoUrl)) {
+  if (!validateYoutubeUrl(videoUrl)) {
     return { message: "YouTube odkaz není ve správném tvaru.", ok: false };
+  }
+
+  if (!validateExternalUrl(webObce)) {
+    return { message: "Web obce musí začínat na http:// nebo https://.", ok: false };
   }
 
   if (photos.length > 5) {
@@ -290,11 +297,11 @@ export async function requestManagementLinkAction(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const email = stringValue(formData, "email").toLowerCase();
+  const email = plainValue(formData, "email", contributionTextLimits.email).toLowerCase();
   const successMessage =
     "Pokud k tomuto e-mailu existují příspěvky, poslali jsme odkaz pro jejich úpravu.";
 
-  if (!email || !email.includes("@")) {
+  if (!isValidEmail(email)) {
     return { message: "Vyplňte prosím platný e-mail.", ok: false };
   }
 
@@ -405,14 +412,32 @@ export async function updateContributionAction(formData: FormData) {
     }
   }
 
+  const updatedTitle = plainValue(formData, "nadpis", contributionTextLimits.title);
+  const updatedVideoUrl = plainValue(formData, "video_url", contributionTextLimits.url);
+  const updatedWebObce = plainValue(formData, "web_obce", contributionTextLimits.url);
+
+  if (!updatedTitle) {
+    redirect(`/moje-prispevky?token=${token}&chyba=nadpis`);
+  }
+
+  if (!validateYoutubeUrl(updatedVideoUrl)) {
+    redirect(`/moje-prispevky?token=${token}&chyba=video`);
+  }
+
+  if (!validateExternalUrl(updatedWebObce)) {
+    redirect(`/moje-prispevky?token=${token}&chyba=web`);
+  }
+
   const body: Record<string, string | boolean | null> = {
-    jmeno_autora: stringValue(formData, "jmeno_autora") || null,
-    nadpis: stringValue(formData, "nadpis"),
-    popis_videa: stringValue(formData, "popis_videa") || null,
-    text_prispevku: stringValue(formData, "text_prispevku") || null,
+    jmeno_autora:
+      plainValue(formData, "jmeno_autora", contributionTextLimits.authorName) || null,
+    nadpis: updatedTitle,
+    popis_videa:
+      plainValue(formData, "popis_videa", contributionTextLimits.videoDescription) || null,
+    text_prispevku: sanitizeContributionText(stringValue(formData, "text_prispevku")) || null,
     upraveno: new Date().toISOString(),
-    video_url: stringValue(formData, "video_url") || null,
-    web_obce: stringValue(formData, "web_obce") || null,
+    video_url: updatedVideoUrl || null,
+    web_obce: updatedWebObce || null,
   };
 
   try {

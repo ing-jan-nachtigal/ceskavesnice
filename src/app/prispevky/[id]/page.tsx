@@ -1,4 +1,5 @@
 import { PhotoGallery } from "@/components/PhotoGallery";
+import { FormattedContributionText } from "@/components/FormattedContributionText";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { formatCzechDate } from "@/lib/date";
@@ -11,6 +12,7 @@ import {
   type MistoRecord,
   type PrispevekRecord,
 } from "@/lib/supabase/server";
+import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
 import { getYouTubeEmbedUrl } from "@/lib/video";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -57,7 +59,9 @@ export async function generateMetadata({ params }: ContributionDetailPageProps) 
 
   return {
     title: `${data.contribution.nadpis} - ČeskáVesnice.cz`,
-    description: data.contribution.text_prispevku?.slice(0, 160) || "Příspěvek z české vesnice.",
+    description:
+      contributionTextToPlainExcerpt(data.contribution.text_prispevku) ||
+      "Příspěvek z české vesnice.",
   };
 }
 
@@ -130,9 +134,7 @@ export default async function ContributionDetailPage({ params }: ContributionDet
 
             {contribution.text_prispevku ? (
               <div className="border border-emerald-950/10 bg-white/70 p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)] sm:p-8">
-                <p className="whitespace-pre-line text-lg leading-9 text-[#435143]">
-                  {contribution.text_prispevku}
-                </p>
+                <FormattedContributionText text={contribution.text_prispevku} />
               </div>
             ) : null}
 

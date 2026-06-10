@@ -1,3 +1,4 @@
+import { FormattedContributionText } from "@/components/FormattedContributionText";
 import {
   formatMisto,
   getContributionPhotoPaths,
@@ -30,9 +31,9 @@ export function ContributionPreview({ contribution, place }: ContributionPreview
         </h2>
 
         {contribution.text_prispevku ? (
-          <p className="mt-6 whitespace-pre-line text-base leading-8 text-[#435143]">
-            {contribution.text_prispevku}
-          </p>
+          <div className="mt-6">
+            <FormattedContributionText text={contribution.text_prispevku} />
+          </div>
         ) : null}
       </div>
 
