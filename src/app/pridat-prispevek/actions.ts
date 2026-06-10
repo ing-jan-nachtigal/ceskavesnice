@@ -440,18 +440,20 @@ export async function updateContributionAction(formData: FormData) {
     video_url: updatedVideoUrl || null,
     web_obce: updatedWebObce || null,
   };
+  let currentMistoId: number | null = null;
 
   try {
     const currentRows = await supabaseRest<PrispevekRecord[]>(
       `prispevky?id=eq.${id}&email=eq.${encodeURIComponent(
         session.email,
-      )}&limit=1&select=id,foto_1,foto_2,foto_3,foto_4,foto_5`,
+      )}&limit=1&select=id,id_mista,foto_1,foto_2,foto_3,foto_4,foto_5`,
     );
     const currentContribution = currentRows[0];
 
     if (!currentContribution) {
       redirect("/moje-prispevky?error=missing");
     }
+    currentMistoId = currentContribution.id_mista;
     console.log("[edit-contribution] authorized", { id });
 
     const photoValues = [
@@ -492,6 +494,9 @@ export async function updateContributionAction(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath(`/prispevky/${id}`);
+  if (currentMistoId) {
+    revalidatePath(`/mista/${currentMistoId}`);
+  }
   redirect(`/moje-prispevky?token=${token}&ulozeno=1`);
 }
 

@@ -218,6 +218,20 @@ export function contributionTextToEditorHtml(value: string | null | undefined) {
   return renderContributionBlocksToHtml(parseContributionText(text));
 }
 
+export function contributionTextToSafeHtml(value: string | null | undefined) {
+  const text = sanitizeContributionText(value || "");
+
+  if (!text) {
+    return "";
+  }
+
+  if (looksLikeHtml(text)) {
+    return text;
+  }
+
+  return renderContributionBlocksToHtml(parseContributionText(text));
+}
+
 export function plainTextToContributionHtml(value: string) {
   const paragraphs = sanitizePlainText(value, contributionTextLimits.contributionText)
     .split(/\n{2,}/)
