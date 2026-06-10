@@ -10,6 +10,10 @@ function renderInline(parts: ContributionTextInline[]) {
       <strong className="font-semibold text-[#102417]" key={`${part.text}-${index}`}>
         {part.text}
       </strong>
+    ) : part.type === "large" ? (
+      <span className="cv-text-large" key={`${part.text}-${index}`}>
+        {part.text}
+      </span>
     ) : (
       <span key={`${part.text}-${index}`}>{part.text}</span>
     ),

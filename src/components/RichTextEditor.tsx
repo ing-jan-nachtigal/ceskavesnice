@@ -15,7 +15,7 @@ type RichTextEditorProps = {
   resetKey?: number | string;
 };
 
-type FormatAction = "bold" | "heading" | "list";
+type FormatAction = "bold" | "large" | "list";
 
 export function RichTextEditor({
   defaultValue = "",
@@ -80,8 +80,8 @@ export function RichTextEditor({
       document.execCommand("bold");
     }
 
-    if (action === "heading") {
-      document.execCommand("formatBlock", false, isSelectionInside("h2") ? "p" : "h2");
+    if (action === "large") {
+      toggleLargeText(editor);
     }
 
     if (action === "list") {
@@ -91,12 +91,53 @@ export function RichTextEditor({
     syncFromEditor();
   }
 
-  function isSelectionInside(selector: string) {
+  function getSelectionElement() {
     const selection = window.getSelection();
     const node = selection?.anchorNode;
-    const element = node instanceof Element ? node : node?.parentElement;
+    return node instanceof Element ? node : node?.parentElement;
+  }
 
-    return Boolean(element?.closest(selector));
+  function toggleLargeText(editor: HTMLDivElement) {
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const selectedElement = getSelectionElement();
+    const existingLarge = selectedElement?.closest(".cv-text-large");
+
+    if (existingLarge && editor.contains(existingLarge)) {
+      const parent = existingLarge.parentNode;
+
+      if (!parent) {
+        return;
+      }
+
+      while (existingLarge.firstChild) {
+        parent.insertBefore(existingLarge.firstChild, existingLarge);
+      }
+
+      parent.removeChild(existingLarge);
+      syncFromEditor();
+      return;
+    }
+
+    const wrapper = document.createElement("span");
+    wrapper.className = "cv-text-large";
+
+    try {
+      range.surroundContents(wrapper);
+    } catch {
+      wrapper.appendChild(range.extractContents());
+      range.insertNode(wrapper);
+    }
+
+    selection.removeAllRanges();
+    const nextRange = document.createRange();
+    nextRange.selectNodeContents(wrapper);
+    selection.addRange(nextRange);
   }
 
   function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
@@ -117,10 +158,10 @@ export function RichTextEditor({
         <button
           className="rounded-full border border-emerald-950/14 bg-[#f8faf4] px-3 py-1.5 text-xs font-semibold text-[#17331f] transition hover:bg-white"
           onMouseDown={(event) => event.preventDefault()}
-          onClick={() => applyFormat("heading")}
+          onClick={() => applyFormat("large")}
           type="button"
         >
-          Nadpis
+          Větší text
         </button>
         <button
           className="rounded-full border border-emerald-950/14 bg-[#f8faf4] px-3 py-1.5 text-xs font-semibold text-[#17331f] transition hover:bg-white"
@@ -154,7 +195,7 @@ export function RichTextEditor({
       />
       <input ref={hiddenInputRef} type="hidden" name={name} defaultValue={initialHtml} />
       <p className="text-xs leading-6 text-[#667062]">
-        Editor povoluje jen nadpis, tučný text a odrážky. Vložený text ze schránky
+        Editor povoluje jen větší text, tučný text a odrážky. Vložený text ze schránky
         se očistí od cizích stylů a nebezpečného obsahu.
       </p>
       <button

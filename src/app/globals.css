@@ -136,6 +136,12 @@ body {
   font-weight: 700;
 }
 
+.rich-text-editor .cv-text-large {
+  color: #102417;
+  font-size: 1.18em;
+  font-weight: 600;
+}
+
 .rich-text-editor ul {
   list-style: disc;
   margin: 0.6rem 0 0.9rem;
@@ -153,6 +159,12 @@ body {
 
 .formatted-contribution-text li {
   margin-top: 0.25rem;
+}
+
+.formatted-contribution-text .cv-text-large {
+  color: #102417;
+  font-size: 1.18em;
+  font-weight: 600;
 }
 
 .cv-map-marker-wrapper {

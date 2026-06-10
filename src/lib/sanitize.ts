@@ -16,6 +16,10 @@ export type ContributionTextInline =
     }
   | {
       text: string;
+      type: "large";
+    }
+  | {
+      text: string;
       type: "strong";
     };
 
@@ -33,7 +37,7 @@ export type ContributionTextBlock =
       type: "ul";
     };
 
-const allowedContributionHtmlTags = new Set(["p", "br", "strong", "ul", "li", "h2"]);
+const allowedContributionHtmlTags = new Set(["p", "br", "strong", "ul", "li", "h2", "span"]);
 
 export function sanitizePlainText(value: string, maxLength = 1_000) {
   return value
@@ -234,8 +238,6 @@ function sanitizeContributionHtml(value: string) {
     .replace(/<\s*\/\s*h[1-6]\s*>/gi, "</h2>")
     .replace(/<\s*(div|section|article)(\s[^>]*)?>/gi, "<p>")
     .replace(/<\s*\/\s*(div|section|article)\s*>/gi, "</p>")
-    .replace(/<\s*span(\s[^>]*)?>/gi, "")
-    .replace(/<\s*\/\s*span\s*>/gi, "")
     .replace(/<\s*([/]?)([a-z0-9]+)(?:\s[^>]*)?>/gi, (match, slash: string, tag: string) => {
       const normalizedTag = tag.toLowerCase();
 
@@ -245,6 +247,16 @@ function sanitizeContributionHtml(value: string) {
 
       if (normalizedTag === "br") {
         return "<br>";
+      }
+
+      if (normalizedTag === "span") {
+        if (slash) {
+          return "</span>";
+        }
+
+        return /\bclass\s*=\s*["'][^"']*\bcv-text-large\b[^"']*["']/i.test(match)
+          ? '<span class="cv-text-large">'
+          : "";
       }
 
       return slash ? `</${normalizedTag}>` : `<${normalizedTag}>`;
@@ -277,21 +289,21 @@ function parseContributionHtml(value: string) {
 
     if (tag === "h2") {
       blocks.push({
-        children: parseHtmlInlineStrong(content),
+        children: parseHtmlInlineFormatting(content),
         type: "h2",
       });
     }
 
     if (tag === "p") {
       blocks.push({
-        lines: content.split(/<br\s*\/?>/i).map(parseHtmlInlineStrong),
+        lines: content.split(/<br\s*\/?>/i).map(parseHtmlInlineFormatting),
         type: "p",
       });
     }
 
     if (tag === "ul") {
       const items = [...content.matchAll(/<li>([\s\S]*?)<\/li>/gi)].map((item) =>
-        parseHtmlInlineStrong(item[1]),
+        parseHtmlInlineFormatting(item[1]),
       );
 
       if (items.length > 0) {
@@ -326,9 +338,9 @@ function parseContributionHtml(value: string) {
   return blocks;
 }
 
-function parseHtmlInlineStrong(value: string): ContributionTextInline[] {
+function parseHtmlInlineFormatting(value: string): ContributionTextInline[] {
   const parts: ContributionTextInline[] = [];
-  const pattern = /<strong>([\s\S]*?)<\/strong>/gi;
+  const pattern = /<(strong|span class="cv-text-large")>([\s\S]*?)<\/(?:strong|span)>/gi;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -341,8 +353,8 @@ function parseHtmlInlineStrong(value: string): ContributionTextInline[] {
     }
 
     parts.push({
-      text: htmlToPlainText(match[1]),
-      type: "strong",
+      text: htmlToPlainText(match[2]),
+      type: match[1].startsWith("span") ? "large" : "strong",
     });
     lastIndex = match.index + match[0].length;
   }
@@ -380,6 +392,8 @@ function renderInlineToHtml(parts: ContributionTextInline[]) {
     .map((part) =>
       part.type === "strong"
         ? `<strong>${escapeHtml(part.text)}</strong>`
+        : part.type === "large"
+          ? `<span class="cv-text-large">${escapeHtml(part.text)}</span>`
         : escapeHtml(part.text),
     )
     .join("");

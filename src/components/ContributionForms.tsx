@@ -8,7 +8,6 @@ import {
 import { PhotoUploadSlots, type PhotoUploadSlotsHandle } from "@/components/PhotoUploadSlots";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { VillageAutocompleteField } from "@/components/VillageAutocompleteField";
-import Link from "next/link";
 import { startTransition, useActionState, useRef, useState, type FormEvent } from "react";
 
 const initialState: ActionState = {
@@ -210,25 +209,6 @@ export function ContributionForms() {
         </section>
 
         <aside className="space-y-8">
-          <section className="border border-emerald-950/10 bg-white/72 p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)] sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-800/70">
-              správa příspěvků
-            </p>
-            <h2 className="mt-4 font-serif text-3xl text-[#102417]">
-              Už jste přispěli?
-            </h2>
-            <p className="mt-4 text-sm leading-7 text-[#667062]">
-              Nechte si poslat soukromý odkaz, přes který uvidíte svoje příspěvky
-              a můžete je upravit nebo smazat z webu.
-            </p>
-            <Link
-              href="/upravit-prispevky"
-              className="btn-3d btn-primary mt-6 inline-flex px-5 py-3 text-sm font-semibold"
-            >
-              Otevřít úpravu příspěvků
-            </Link>
-          </section>
-
           <section className="border border-emerald-950/10 bg-[#eef7f6] p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)] sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-800/70">
               B) Úprava mých příspěvků
