@@ -24,6 +24,8 @@ async function confirmContribution(token: string | undefined) {
     return null;
   }
 
+  console.log("[confirm-contribution] token received");
+
   try {
     const tokenHash = hashToken(token);
     const params = new URLSearchParams({
@@ -41,6 +43,11 @@ async function confirmContribution(token: string | undefined) {
       return null;
     }
 
+    console.log("[confirm-contribution] contribution found", {
+      id: contribution.id,
+      zverejneno: contribution.zverejneno,
+    });
+
     const wasAlreadyPublished = contribution.zverejneno;
     const confirmedAt = contribution.potvrzeno_v || new Date().toISOString();
 
@@ -52,11 +59,21 @@ async function confirmContribution(token: string | undefined) {
         }),
         method: "PATCH",
       });
+      console.log("[confirm-contribution] published", { id: contribution.id });
+    } else {
+      console.log("[confirm-contribution] already published", { id: contribution.id });
     }
 
-    const placeRows = await supabaseRest<MistoRecord[]>(
-      `mista?select=id,nazev,nazev_obce,okres,kraj&id=eq.${contribution.id_mista}&limit=1`,
-    );
+    let place: MistoRecord | undefined;
+
+    try {
+      const placeRows = await supabaseRest<MistoRecord[]>(
+        `mista?select=id,nazev,nazev_obce,okres,kraj&id=eq.${contribution.id_mista}&limit=1`,
+      );
+      place = placeRows[0];
+    } catch (error) {
+      console.error("[confirm-contribution] failed to load place", error);
+    }
 
     const confirmedContribution = {
       ...contribution,
@@ -65,19 +82,23 @@ async function confirmContribution(token: string | undefined) {
     };
 
     if (!wasAlreadyPublished) {
-      revalidatePath("/");
-      revalidatePath(`/prispevky/${contribution.id}`);
-      revalidatePath("/mapa");
-      revalidatePath(`/mista/${contribution.id_mista}`);
+      try {
+        revalidatePath("/");
+        revalidatePath(`/prispevky/${contribution.id}`);
+        revalidatePath("/mapa");
+        revalidatePath(`/mista/${contribution.id_mista}`);
+      } catch (error) {
+        console.error("[confirm-contribution] revalidation failed", error);
+      }
     }
 
     return {
       contribution: confirmedContribution,
-      place: placeRows[0],
+      place,
       status: wasAlreadyPublished ? "already-confirmed" : "confirmed",
     };
   } catch (error) {
-    console.error("Contribution confirmation failed", error);
+    console.error("[confirm-contribution] failed", error);
     return null;
   }
 }

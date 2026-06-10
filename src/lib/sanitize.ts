@@ -230,14 +230,35 @@ export function plainTextToContributionHtml(value: string) {
 }
 
 function sanitizeContributionHtml(value: string) {
+  let openLargeSpanCount = 0;
+
   return value
     .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<\s*(script|style|iframe|object|embed)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed)\b[^>]*\/?>/gi, "")
     .replace(/<\s*b(\s[^>]*)?>/gi, "<strong>")
     .replace(/<\s*\/\s*b\s*>/gi, "</strong>")
     .replace(/<\s*(h[1-6])(\s[^>]*)?>/gi, "<h2>")
     .replace(/<\s*\/\s*h[1-6]\s*>/gi, "</h2>")
     .replace(/<\s*(div|section|article)(\s[^>]*)?>/gi, "<p>")
     .replace(/<\s*\/\s*(div|section|article)\s*>/gi, "</p>")
+    .replace(/<\s*(\/?)\s*span\b([^>]*)>/gi, (match, slash: string) => {
+      if (slash) {
+        if (openLargeSpanCount === 0) {
+          return "";
+        }
+
+        openLargeSpanCount -= 1;
+        return "</cv-large-span>";
+      }
+
+      if (!/\bclass\s*=\s*["'][^"']*\bcv-text-large\b[^"']*["']/i.test(match)) {
+        return "";
+      }
+
+      openLargeSpanCount += 1;
+      return "<cv-large-span>";
+    })
     .replace(/<\s*([/]?)([a-z0-9]+)(?:\s[^>]*)?>/gi, (match, slash: string, tag: string) => {
       const normalizedTag = tag.toLowerCase();
 
@@ -249,18 +270,10 @@ function sanitizeContributionHtml(value: string) {
         return "<br>";
       }
 
-      if (normalizedTag === "span") {
-        if (slash) {
-          return "</span>";
-        }
-
-        return /\bclass\s*=\s*["'][^"']*\bcv-text-large\b[^"']*["']/i.test(match)
-          ? '<span class="cv-text-large">'
-          : "";
-      }
-
       return slash ? `</${normalizedTag}>` : `<${normalizedTag}>`;
     })
+    .replace(/<cv-large-span>/g, '<span class="cv-text-large">')
+    .replace(/<\/cv-large-span>/g, "</span>")
     .replace(/<p>\s*(<ul>[\s\S]*?<\/ul>)\s*<\/p>/gi, "$1")
     .replace(/<p>\s*(<h2>[\s\S]*?<\/h2>)\s*<\/p>/gi, "$1")
     .replace(/javascript:/gi, "")

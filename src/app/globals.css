@@ -153,15 +153,18 @@ body {
   margin: 0.2rem 0;
 }
 
+.cv-formatted-text ul,
 .formatted-contribution-text ul {
   list-style: disc;
   padding-left: 1.5rem;
 }
 
+.cv-formatted-text li,
 .formatted-contribution-text li {
   margin-top: 0.25rem;
 }
 
+.cv-formatted-text .cv-text-large,
 .formatted-contribution-text .cv-text-large {
   color: #102417;
   font-size: 1.45em;

@@ -1,5 +1,6 @@
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { FormattedContributionText } from "@/components/FormattedContributionText";
 import { formatCzechDate } from "@/lib/date";
 import { cleanDistrict } from "@/lib/places";
 import {
@@ -10,7 +11,6 @@ import {
   type MistoRecord,
   type PrispevekRecord,
 } from "@/lib/supabase/server";
-import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
 import { getVideoInfo } from "@/lib/video";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -196,9 +196,14 @@ export default async function PlacePage({ params }: PlacePageProps) {
                       <h3 className="mt-4 font-serif text-3xl text-[#102417]">
                         {contribution.nadpis}
                       </h3>
-                      <p className="mt-4 text-sm leading-7 text-[#515d50]">
-                        {contributionTextToPlainExcerpt(contribution.text_prispevku, 140)}
-                      </p>
+                      {contribution.text_prispevku ? (
+                        <div className="mt-4">
+                          <FormattedContributionText
+                            text={contribution.text_prispevku}
+                            variant="compact"
+                          />
+                        </div>
+                      ) : null}
                     </article>
                   </Link>
                 );
