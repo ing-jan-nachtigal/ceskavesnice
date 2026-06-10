@@ -51,6 +51,7 @@ export const PhotoUploadSlots = forwardRef<PhotoUploadSlotsHandle, PhotoUploadSl
       () => photoSlots.map((slot) => existingPhotoUrls[slot - 1] || null),
       [existingPhotoUrls],
     );
+    const existingPhotoSignature = normalizedExistingUrls.join("|");
     const [preparedFiles, setPreparedFiles] = useState<Record<number, File | null>>(
       emptyPhotoState,
     );
@@ -59,6 +60,15 @@ export const PhotoUploadSlots = forwardRef<PhotoUploadSlotsHandle, PhotoUploadSl
     const [isPreparing, setIsPreparing] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+
+    useEffect(() => {
+      setPreparedFiles(emptyPhotoState());
+      setPreviewUrls(emptyPreviewState());
+      setRemovedSlots({});
+      setIsPreparing(false);
+      setMessage("");
+      setError("");
+    }, [existingPhotoSignature]);
 
     useEffect(() => {
       onStatusChange?.({

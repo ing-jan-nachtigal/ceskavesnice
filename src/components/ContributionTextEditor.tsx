@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import { FormattedContributionText } from "@/components/FormattedContributionText";
+import { useRef, useState } from "react";
 
 type ContributionTextEditorProps = {
   defaultValue?: string;
@@ -16,6 +17,7 @@ export function ContributionTextEditor({
   placeholder = "Napište vzpomínku, popis fotografie, historickou zajímavost nebo opravu záznamu.",
 }: ContributionTextEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [value, setValue] = useState(defaultValue);
 
   function applyFormat(action: FormatAction) {
     const textarea = textareaRef.current;
@@ -50,10 +52,13 @@ export function ContributionTextEditor({
         .join("\n");
     }
 
-    textarea.value = `${value.slice(0, start)}${replacement}${value.slice(end)}`;
+    const nextValue = `${value.slice(0, start)}${replacement}${value.slice(end)}`;
+    setValue(nextValue);
     textarea.focus();
-    textarea.selectionStart = start;
-    textarea.selectionEnd = start + replacement.length;
+    window.requestAnimationFrame(() => {
+      textarea.selectionStart = start;
+      textarea.selectionEnd = start + replacement.length;
+    });
   }
 
   return (
@@ -89,7 +94,8 @@ export function ContributionTextEditor({
         id="text_prispevku"
         name="text_prispevku"
         rows={8}
-        defaultValue={defaultValue}
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
         placeholder={placeholder}
         className="resize-y rounded-b-2xl border border-emerald-950/14 bg-[#f8faf4] px-4 py-3 outline-none transition placeholder:text-[#8a9385] focus:border-emerald-800/45 focus:bg-white"
       />
@@ -97,6 +103,18 @@ export function ContributionTextEditor({
         Použít můžete jen jednoduché značky: <span className="font-semibold">## Nadpis</span>,{" "}
         <span className="font-semibold">**tučně**</span> a odrážky začínající pomlčkou.
       </p>
+      <div className="mt-3 rounded-3xl border border-emerald-950/10 bg-white/70 p-5">
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-800/70">
+          Náhled
+        </p>
+        {value.trim() ? (
+          <FormattedContributionText text={value} />
+        ) : (
+          <p className="text-sm leading-7 text-[#667062]">
+            Jakmile začnete psát, uvidíte zde podobu textu na webu.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

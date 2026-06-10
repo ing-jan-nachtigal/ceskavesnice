@@ -187,6 +187,7 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
           <div className="border border-emerald-950/10 bg-white/70 p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)] sm:p-8">
             {editContribution ? (
               <EditContributionForm
+                key={editContribution.id}
                 contribution={editContribution}
                 photoUrls={[
                   getStoragePublicUrl(editContribution.foto_1),

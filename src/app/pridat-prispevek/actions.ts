@@ -396,6 +396,7 @@ export async function updateContributionAction(formData: FormData) {
   const token = stringValue(formData, "token");
   const id = Number(stringValue(formData, "id"));
   const session = await validateManagementToken(token);
+  console.log("[edit-contribution] start", { id });
 
   if (!token || !id || !session) {
     redirect("/moje-prispevky?error=missing");
@@ -451,6 +452,7 @@ export async function updateContributionAction(formData: FormData) {
     if (!currentContribution) {
       redirect("/moje-prispevky?error=missing");
     }
+    console.log("[edit-contribution] authorized", { id });
 
     const photoValues = [
       currentContribution.foto_1,
@@ -478,8 +480,13 @@ export async function updateContributionAction(formData: FormData) {
       body: JSON.stringify(body),
       method: "PATCH",
     });
+    console.log("[edit-contribution] updated", { id });
   } catch (error) {
-    console.error("Contribution update failed", error);
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
+    console.error("[edit-contribution] failed", error);
     redirect(`/moje-prispevky?token=${token}&chyba=ulozeni`);
   }
 
