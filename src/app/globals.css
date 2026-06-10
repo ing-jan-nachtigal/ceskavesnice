@@ -138,8 +138,9 @@ body {
 
 .rich-text-editor .cv-text-large {
   color: #102417;
-  font-size: 1.18em;
+  font-size: 1.45em;
   font-weight: 600;
+  line-height: 1.25;
 }
 
 .rich-text-editor ul {
@@ -163,8 +164,9 @@ body {
 
 .formatted-contribution-text .cv-text-large {
   color: #102417;
-  font-size: 1.18em;
+  font-size: 1.45em;
   font-weight: 600;
+  line-height: 1.25;
 }
 
 .cv-map-marker-wrapper {
