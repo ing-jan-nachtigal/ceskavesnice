@@ -5,13 +5,14 @@ import {
   plainTextToContributionHtml,
   sanitizeContributionText,
 } from "@/lib/sanitize";
-import { useMemo, useRef, useState, type ClipboardEvent } from "react";
+import { useEffect, useMemo, useRef, type ClipboardEvent } from "react";
 
 type RichTextEditorProps = {
   defaultValue?: string;
   label?: string;
   name?: string;
   placeholder?: string;
+  resetKey?: number | string;
 };
 
 type FormatAction = "bold" | "heading" | "list";
@@ -21,24 +22,39 @@ export function RichTextEditor({
   label = "Text příspěvku",
   name = "text_prispevku",
   placeholder = "Napište vzpomínku, popis fotografie, historickou zajímavost nebo opravu záznamu.",
+  resetKey,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
   const initialHtml = useMemo(() => contributionTextToEditorHtml(defaultValue), [defaultValue]);
-  const [html, setHtml] = useState(initialHtml);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    const hiddenInput = hiddenInputRef.current;
+
+    if (!editor || !hiddenInput) {
+      return;
+    }
+
+    editor.innerHTML = initialHtml;
+    hiddenInput.value = initialHtml;
+  }, [initialHtml, resetKey]);
 
   function syncFromEditor() {
     const editor = editorRef.current;
+    const hiddenInput = hiddenInputRef.current;
 
-    if (!editor) {
+    if (!editor || !hiddenInput) {
       return;
     }
 
     const sanitized = sanitizeContributionText(editor.innerHTML);
-    setHtml(sanitized);
+    hiddenInput.value = sanitized;
   }
 
   function replaceEditorHtml(nextHtml: string) {
     const editor = editorRef.current;
+    const hiddenInput = hiddenInputRef.current;
     const sanitized = sanitizeContributionText(nextHtml);
 
     if (editor) {
@@ -46,7 +62,9 @@ export function RichTextEditor({
       editor.focus();
     }
 
-    setHtml(sanitized);
+    if (hiddenInput) {
+      hiddenInput.value = sanitized;
+    }
   }
 
   function applyFormat(action: FormatAction) {
@@ -90,6 +108,7 @@ export function RichTextEditor({
       <div className="flex flex-wrap gap-2 rounded-t-2xl border border-emerald-950/14 border-b-0 bg-white/72 px-3 py-2">
         <button
           className="rounded-full border border-emerald-950/14 bg-[#f8faf4] px-3 py-1.5 text-xs font-semibold text-[#17331f] transition hover:bg-white"
+          onMouseDown={(event) => event.preventDefault()}
           onClick={() => applyFormat("heading")}
           type="button"
         >
@@ -97,6 +116,7 @@ export function RichTextEditor({
         </button>
         <button
           className="rounded-full border border-emerald-950/14 bg-[#f8faf4] px-3 py-1.5 text-xs font-semibold text-[#17331f] transition hover:bg-white"
+          onMouseDown={(event) => event.preventDefault()}
           onClick={() => applyFormat("bold")}
           type="button"
         >
@@ -104,6 +124,7 @@ export function RichTextEditor({
         </button>
         <button
           className="rounded-full border border-emerald-950/14 bg-[#f8faf4] px-3 py-1.5 text-xs font-semibold text-[#17331f] transition hover:bg-white"
+          onMouseDown={(event) => event.preventDefault()}
           onClick={() => applyFormat("list")}
           type="button"
         >
@@ -122,9 +143,8 @@ export function RichTextEditor({
         onInput={syncFromEditor}
         onPaste={handlePaste}
         className="rich-text-editor min-h-56 rounded-b-2xl border border-emerald-950/14 bg-[#f8faf4] px-4 py-3 text-base leading-8 text-[#435143] outline-none transition focus:border-emerald-800/45 focus:bg-white"
-        dangerouslySetInnerHTML={{ __html: initialHtml }}
       />
-      <input type="hidden" name={name} value={html} />
+      <input ref={hiddenInputRef} type="hidden" name={name} defaultValue={initialHtml} />
       <p className="text-xs leading-6 text-[#667062]">
         Editor povoluje jen nadpis, tučný text a odrážky. Vložený text ze schránky
         se očistí od cizích stylů a nebezpečného obsahu.

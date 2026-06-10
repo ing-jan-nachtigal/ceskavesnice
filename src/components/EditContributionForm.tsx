@@ -80,7 +80,10 @@ export function EditContributionForm({
         />
       </label>
 
-      <RichTextEditor defaultValue={contribution.text_prispevku || ""} />
+      <RichTextEditor
+        defaultValue={contribution.text_prispevku || ""}
+        resetKey={contribution.id}
+      />
 
       <label className="grid gap-2 text-sm font-medium text-[#334235]">
         YouTube URL
