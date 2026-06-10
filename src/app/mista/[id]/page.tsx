@@ -56,15 +56,37 @@ async function loadPlace(id: string) {
 
 export async function generateMetadata({ params }: PlacePageProps) {
   const { id } = await params;
-  const { place } = await loadPlace(id);
+  const { contributions, place } = await loadPlace(id);
 
   if (!place) {
     return {};
   }
 
+  const firstContribution = contributions[0];
+  const firstPhoto = firstContribution
+    ? getContributionPhotoPaths(firstContribution)[0]
+    : null;
+  const imageUrl = firstContribution
+    ? getYouTubeThumbnailUrl(firstContribution.video_url) ||
+      (firstPhoto ? getStoragePublicUrl(firstPhoto) : null)
+    : null;
+  const district = cleanDistrict(place.okres);
+  const description = `Příspěvky, fotografie a videa k místu ${place.nazev}, okres ${district}, ${
+    place.kraj || "kraj neuveden"
+  }.`;
+  const title = `${place.nazev}, okres ${district} - ${
+    place.kraj || "ČeskáVesnice.cz"
+  } - ČeskáVesnice.cz`;
+
   return {
-    description: `Veřejné příspěvky k místu ${formatMisto(place)}.`,
-    title: `${place.nazev} - ČeskáVesnice.cz`,
+    description,
+    openGraph: {
+      description,
+      images: imageUrl ? [{ url: imageUrl }] : undefined,
+      title,
+      type: "website",
+    },
+    title,
   };
 }
 

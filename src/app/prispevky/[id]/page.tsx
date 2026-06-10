@@ -13,7 +13,7 @@ import {
   type PrispevekRecord,
 } from "@/lib/supabase/server";
 import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
-import { getYouTubeEmbedUrl } from "@/lib/video";
+import { getYouTubeEmbedUrl, getYouTubeThumbnailUrl } from "@/lib/video";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -57,11 +57,23 @@ export async function generateMetadata({ params }: ContributionDetailPageProps) 
     return {};
   }
 
+  const { contribution, place } = data;
+  const description = contributionTextToPlainExcerpt(contribution.text_prispevku);
+  const firstPhoto = getContributionPhotoPaths(contribution)[0];
+  const imageUrl =
+    getYouTubeThumbnailUrl(contribution.video_url) ||
+    (firstPhoto ? getStoragePublicUrl(firstPhoto) : null);
+  const title = `${contribution.nadpis}${place?.nazev ? ` – ${place.nazev}` : ""} - ČeskáVesnice.cz`;
+
   return {
-    title: `${data.contribution.nadpis} - ČeskáVesnice.cz`,
-    description:
-      contributionTextToPlainExcerpt(data.contribution.text_prispevku) ||
-      "Příspěvek z české vesnice.",
+    description,
+    openGraph: {
+      description,
+      images: imageUrl ? [{ url: imageUrl }] : undefined,
+      title,
+      type: "article",
+    },
+    title,
   };
 }
 

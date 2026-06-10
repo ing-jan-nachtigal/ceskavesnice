@@ -81,7 +81,7 @@ export function RichTextEditor({
     }
 
     if (action === "heading") {
-      document.execCommand("formatBlock", false, "h2");
+      document.execCommand("formatBlock", false, isSelectionInside("h2") ? "p" : "h2");
     }
 
     if (action === "list") {
@@ -89,6 +89,14 @@ export function RichTextEditor({
     }
 
     syncFromEditor();
+  }
+
+  function isSelectionInside(selector: string) {
+    const selection = window.getSelection();
+    const node = selection?.anchorNode;
+    const element = node instanceof Element ? node : node?.parentElement;
+
+    return Boolean(element?.closest(selector));
   }
 
   function handlePaste(event: ClipboardEvent<HTMLDivElement>) {

@@ -28,9 +28,12 @@ type PublicContribution = Pick<
   | "vytvoreno"
 >;
 
+type PublicContributionPlaceRef = Pick<PrispevekRecord, "id_mista">;
+
 async function loadPublicData() {
   if (!isServerSupabaseConfigured()) {
     return {
+      chroniclePlaceCount: null,
       placeCount: null,
       publicCount: null,
       recent: [] as PublicContribution[],
@@ -39,9 +42,12 @@ async function loadPublicData() {
   }
 
   try {
-    const [placeCount, publicCount, recent] = await Promise.all([
+    const [placeCount, publicCount, publicPlaceRefs, recent] = await Promise.all([
       countRows("mista"),
       countRows("prispevky", "&zverejneno=eq.true&smazano_autorem_v=is.null"),
+      supabaseRest<PublicContributionPlaceRef[]>(
+        "prispevky?select=id_mista&zverejneno=eq.true&smazano_autorem_v=is.null&limit=10000",
+      ),
       supabaseRest<PublicContribution[]>(
         "prispevky?select=id,id_mista,nadpis,text_prispevku,video_url,foto_1,foto_2,foto_3,foto_4,foto_5,vytvoreno&zverejneno=eq.true&smazano_autorem_v=is.null&order=vytvoreno.desc&limit=6",
       ),
@@ -55,6 +61,8 @@ async function loadPublicData() {
         : [];
 
     return {
+      chroniclePlaceCount: new Set(publicPlaceRefs.map((contribution) => contribution.id_mista))
+        .size,
       placeCount,
       places: new Map(places.map((place) => [place.id, place])),
       publicCount,
@@ -62,6 +70,7 @@ async function loadPublicData() {
     };
   } catch {
     return {
+      chroniclePlaceCount: null,
       placeCount: null,
       publicCount: null,
       recent: [] as PublicContribution[],
@@ -71,7 +80,7 @@ async function loadPublicData() {
 }
 
 export async function PublicContributions() {
-  const { placeCount, publicCount, recent, places } = await loadPublicData();
+  const { chroniclePlaceCount, placeCount, publicCount, recent, places } = await loadPublicData();
 
   return (
     <section id="vesnice" className="bg-[#f7f5ed] px-5 py-20 text-[#17251b] sm:px-8 lg:py-28">
@@ -85,7 +94,7 @@ export async function PublicContributions() {
               Příspěvky z českých vesnic
             </h2>
           </div>
-          <div className="grid gap-3 text-sm text-[#667062] sm:grid-cols-2">
+          <div className="grid gap-3 text-sm text-[#667062] sm:grid-cols-3">
             <div className="border border-emerald-950/10 bg-white/58 p-4">
               <p className="text-xs uppercase tracking-[0.2em]">míst v databázi</p>
               <p className="mt-2 font-serif text-3xl text-[#102417]">{placeCount ?? "..."}</p>
@@ -93,6 +102,12 @@ export async function PublicContributions() {
             <div className="border border-emerald-950/10 bg-white/58 p-4">
               <p className="text-xs uppercase tracking-[0.2em]">zveřejněných příspěvků</p>
               <p className="mt-2 font-serif text-3xl text-[#102417]">{publicCount ?? "..."}</p>
+            </div>
+            <div className="border border-emerald-950/10 bg-white/58 p-4">
+              <p className="text-xs uppercase tracking-[0.2em]">míst v kronice</p>
+              <p className="mt-2 font-serif text-3xl text-[#102417]">
+                {chroniclePlaceCount ?? "..."}
+              </p>
             </div>
           </div>
         </div>

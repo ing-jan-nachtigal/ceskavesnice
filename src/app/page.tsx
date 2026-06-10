@@ -11,6 +11,18 @@ type HomePageProps = {
   }>;
 };
 
+export const metadata = {
+  description:
+    "Digitální krajinná kronika českých vesnic, osad, fotografií, videí a vzpomínek.",
+  openGraph: {
+    description:
+      "Digitální krajinná kronika českých vesnic, osad, fotografií, videí a vzpomínek.",
+    title: "ČeskáVesnice.cz – české vesnice očima lidí, kteří je mají rádi",
+    type: "website",
+  },
+  title: "ČeskáVesnice.cz – české vesnice očima lidí, kteří je mají rádi",
+};
+
 export default async function Home({ searchParams }: HomePageProps) {
   const { odeslano } = await searchParams;
 

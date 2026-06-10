@@ -247,6 +247,8 @@ function sanitizeContributionHtml(value: string) {
 
       return slash ? `</${normalizedTag}>` : `<${normalizedTag}>`;
     })
+    .replace(/<p>\s*(<ul>[\s\S]*?<\/ul>)\s*<\/p>/gi, "$1")
+    .replace(/<p>\s*(<h2>[\s\S]*?<\/h2>)\s*<\/p>/gi, "$1")
     .replace(/javascript:/gi, "")
     .trim();
 }
