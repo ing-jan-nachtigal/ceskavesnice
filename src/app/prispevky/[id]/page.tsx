@@ -5,7 +5,6 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { formatCzechDate } from "@/lib/date";
 import { cleanDistrict } from "@/lib/places";
 import {
-  formatMisto,
   getContributionPhotoPaths,
   getStoragePublicUrl,
   supabaseRest,
@@ -90,6 +89,14 @@ export default async function ContributionDetailPage({ params }: ContributionDet
   const photoUrls = getContributionPhotoPaths(contribution)
     .map((path) => getStoragePublicUrl(path))
     .filter((url): url is string => Boolean(url));
+  const placeName = place?.nazev.toLocaleUpperCase("cs-CZ") || "MÍSTO NEUVEDENO";
+  const placeDetails = place
+    ? [
+        place.nazev_obce || "obec neuvedena",
+        `okres ${cleanDistrict(place.okres)}`,
+        place.kraj || "kraj neuveden",
+      ].join(" · ")
+    : "";
 
   return (
     <main className="min-h-screen bg-[#f1f7f4] text-[#17251b]">
@@ -107,11 +114,19 @@ export default async function ContributionDetailPage({ params }: ContributionDet
           <div className="mt-10 grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-800/70">
-                {formatMisto(place)}
+                místo příspěvku
               </p>
               <h1 className="mt-5 font-serif text-5xl leading-tight text-[#102417] sm:text-7xl">
-                {contribution.nadpis}
+                {placeName}
               </h1>
+              {placeDetails ? (
+                <p className="mt-4 text-sm font-medium tracking-[0.14em] text-[#7c8576]">
+                  {placeDetails}
+                </p>
+              ) : null}
+              <h2 className="mt-8 font-serif text-4xl leading-tight text-[#102417] sm:text-5xl">
+                {contribution.nadpis}
+              </h2>
             </div>
 
             <div className="text-sm leading-8 text-[#667062]">
