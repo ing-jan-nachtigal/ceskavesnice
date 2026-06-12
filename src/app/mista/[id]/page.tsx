@@ -1,6 +1,7 @@
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { FormattedContributionText } from "@/components/FormattedContributionText";
+import { PlaceLabel } from "@/components/PlaceLabel";
 import { formatCzechDate } from "@/lib/date";
 import { cleanDistrict } from "@/lib/places";
 import {
@@ -192,6 +193,9 @@ export default async function PlacePage({ params }: PlacePageProps) {
                     <article className="p-6">
                       <p className="text-xs uppercase tracking-[0.18em] text-[#7c8576]">
                         {formatCzechDate(contribution.vytvoreno)}
+                      </p>
+                      <p className="mt-3 text-xs leading-6">
+                        <PlaceLabel place={place} />
                       </p>
                       <h3 className="mt-4 font-serif text-3xl text-[#102417]">
                         {contribution.nadpis}

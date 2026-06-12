@@ -1,7 +1,6 @@
 import { formatCzechDate } from "@/lib/date";
 import {
   countRows,
-  formatMisto,
   getContributionPhotoPaths,
   getStoragePublicUrl,
   isServerSupabaseConfigured,
@@ -12,6 +11,7 @@ import {
 import { contributionTextToPlainExcerpt } from "@/lib/sanitize";
 import { getVideoInfo } from "@/lib/video";
 import Link from "next/link";
+import { PlaceLabel } from "./PlaceLabel";
 
 type PublicContribution = Pick<
   PrispevekRecord,
@@ -140,8 +140,8 @@ export async function PublicContributions() {
                     />
                   ) : null}
                   <article className="p-6">
-                    <p className="text-xs uppercase tracking-[0.18em] text-[#7c8576]">
-                      {formatMisto(place)}
+                    <p className="text-xs leading-6">
+                      <PlaceLabel place={place} />
                     </p>
                     <h3 className="mt-4 font-serif text-3xl text-[#102417]">
                       {contribution.nadpis}

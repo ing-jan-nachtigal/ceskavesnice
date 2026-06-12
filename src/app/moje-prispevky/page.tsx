@@ -3,11 +3,11 @@ import {
   validateManagementToken,
 } from "@/app/pridat-prispevek/actions";
 import { EditContributionForm } from "@/components/EditContributionForm";
+import { PlaceLabel } from "@/components/PlaceLabel";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { formatCzechDate } from "@/lib/date";
 import {
-  formatMisto,
   getStoragePublicUrl,
   supabaseRest,
   type MistoRecord,
@@ -141,8 +141,8 @@ export default async function MyContributionsPage({ searchParams }: MyContributi
                   key={contribution.id}
                   className="border border-emerald-950/10 bg-white/68 p-6 shadow-[0_24px_70px_rgba(40,55,35,0.06)]"
                 >
-                  <p className="text-xs uppercase tracking-[0.22em] text-[#7c8576]">
-                    {formatMisto(place)}
+                  <p className="text-xs leading-6">
+                    <PlaceLabel place={place} />
                   </p>
                   <h2 className="mt-3 font-serif text-3xl text-[#102417]">{contribution.nadpis}</h2>
                   <dl className="mt-5 grid gap-3 text-sm text-[#667062]">

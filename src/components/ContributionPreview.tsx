@@ -1,6 +1,6 @@
 import { FormattedContributionText } from "@/components/FormattedContributionText";
+import { PlaceLabel } from "@/components/PlaceLabel";
 import {
-  formatMisto,
   getContributionPhotoPaths,
   getStoragePublicUrl,
   type MistoRecord,
@@ -23,8 +23,8 @@ export function ContributionPreview({ contribution, place }: ContributionPreview
   return (
     <article className="mt-10 overflow-hidden rounded-3xl border border-emerald-950/10 bg-white/74 shadow-[0_24px_70px_rgba(40,55,35,0.08)]">
       <div className="p-6 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-800/70">
-          {formatMisto(place)}
+        <p className="text-xs leading-6">
+          <PlaceLabel place={place} />
         </p>
         <h2 className="mt-4 font-serif text-4xl leading-tight text-[#102417]">
           {contribution.nadpis}
